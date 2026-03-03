@@ -3,7 +3,7 @@ Tests for the Operations Module
 ================================
 
 Parameterized tests covering all six arithmetic operations:
-add, subtract, multiply, divide, power, root, percentage — including edge cases
+add, subtract, multiply, divide, power, root, percentage, cube, cbrt — including edge cases
 (zero, negative numbers, decimals, large numbers, division by zero,
 root by zero).
 
@@ -24,6 +24,8 @@ from app.operations import (
     root,
     percentage,
     sqrt,
+    cube,
+    cbrt,
     get_operation,
     get_supported_operations,
     OPERATIONS,
@@ -238,6 +240,48 @@ def test_sqrt_negative() -> None:
 
 
 # ---------------------------------------------------------------------------
+# cube
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "a, expected",
+    [
+        (Decimal("3"), Decimal("27")),
+        (Decimal("0"), Decimal("0")),
+        (Decimal("-2"), Decimal("-8")),
+        (Decimal("1.5"), Decimal("3.375")),
+    ],
+    ids=["cube_3", "cube_0", "cube_neg", "cube_decimal"],
+)
+def test_cube(a: Decimal, expected: Decimal) -> None:
+    """Test cube with various inputs."""
+    assert cube(a) == expected
+
+
+# ---------------------------------------------------------------------------
+# cbrt
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "a, expected",
+    [
+        (Decimal("27"), Decimal("3")),
+        (Decimal("0"), Decimal("0")),
+        (Decimal("-8"), Decimal("-2")),
+        (Decimal("1"), Decimal("1")),
+    ],
+    ids=["cbrt_27", "cbrt_0", "cbrt_neg", "cbrt_1"],
+)
+def test_cbrt(a: Decimal, expected: Decimal) -> None:
+    """Test cbrt with various inputs."""
+    # Decimal root might have precision issues, let's check with some tolerance if needed
+    # but for these integers it should be exact if implemented correctly
+    assert cbrt(a) == expected
+
+
+# ---------------------------------------------------------------------------
 # Strategy registry helpers
 # ---------------------------------------------------------------------------
 
@@ -247,8 +291,8 @@ class TestStrategyRegistry:
 
     @pytest.mark.parametrize(
         "name",
-        ["add", "subtract", "multiply", "divide", "power", "root", "percentage", "sqrt"],
-        ids=["add", "subtract", "multiply", "divide", "power", "root", "percentage", "sqrt"],
+        ["add", "subtract", "multiply", "divide", "power", "root", "percentage", "sqrt", "cube", "cbrt"],
+        ids=["add", "subtract", "multiply", "divide", "power", "root", "percentage", "sqrt", "cube", "cbrt"],
     )
     def test_get_operation_valid(self, name: str) -> None:
         """Known names return a callable."""
@@ -263,9 +307,9 @@ class TestStrategyRegistry:
     def test_get_supported_operations(self) -> None:
         """All operations are returned."""
         ops = get_supported_operations()
-        expected_ops = {"add", "subtract", "multiply", "divide", "power", "root", "percentage", "sqrt"}
+        expected_ops = {"add", "subtract", "multiply", "divide", "power", "root", "percentage", "sqrt", "cube", "cbrt"}
         assert set(ops) == expected_ops
 
     def test_operations_dict(self) -> None:
         """OPERATIONS dict contains all expected keys."""
-        assert len(OPERATIONS) == 8
+        assert len(OPERATIONS) == 10

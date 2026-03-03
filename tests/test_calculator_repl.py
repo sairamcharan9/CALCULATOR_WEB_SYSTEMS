@@ -60,10 +60,14 @@ class TestArithmeticOperations:
             ("add -5 3", "-5 + 3 = -2"),
             ("multiply 0 100", "0 * 100 = 0"),
             ("add 1.5 2.5", "1.5 + 2.5 = 4.0"),
+            ("sqrt 9", "√(9) = 3"),
+            ("cube 3", "3^3 = 27"),
+            ("cbrt 27", "³√(27) = 3"),
         ],
         ids=[
             "add", "subtract", "multiply", "divide",
             "power", "root", "negative", "zero", "decimal",
+            "sqrt", "cube", "cbrt",
         ],
     )
     def test_valid_operations(
@@ -89,8 +93,8 @@ class TestInputValidation:
 
     @pytest.mark.parametrize(
         "user_input",
-        ["add", "add 5", "add 5 3 2", "5 3", ""],
-        ids=["one_token", "two_tokens", "four_tokens", "missing_op", "empty"],
+        ["add", "add 5", "add 5 3 2", "5 3", "", "sqrt", "sqrt 9 3"],
+        ids=["one_token", "two_tokens", "four_tokens", "missing_op", "empty", "sqrt_no_arg", "sqrt_too_many"],
     )
     def test_invalid_format(self, calculator: Calculator, user_input: str) -> None:
         """Incorrectly formatted input returns an error."""
@@ -123,8 +127,8 @@ class TestErrorHandling:
 
     @pytest.mark.parametrize(
         "user_input",
-        ["add abc 3", "add 5 xyz", "add abc xyz"],
-        ids=["invalid_first", "invalid_second", "both_invalid"],
+        ["add abc 3", "add 5 xyz", "add abc xyz", "sqrt abc"],
+        ids=["invalid_first", "invalid_second", "both_invalid", "sqrt_invalid"],
     )
     def test_invalid_numbers(self, calculator: Calculator, user_input: str) -> None:
         """Non-numeric inputs are handled gracefully."""
@@ -160,6 +164,7 @@ class TestSpecialCommands:
         result = calculator.process_input("help")
         assert "Calculator Help" in result
         assert "add" in result
+        assert "cube" in result
 
     def test_help_question_mark(self, calculator: Calculator) -> None:
         """'?' is a shortcut for help."""
@@ -174,11 +179,13 @@ class TestSpecialCommands:
     def test_history_with_entries(self, calculator: Calculator) -> None:
         """'history' after calculations shows them."""
         calculator.process_input("add 1 2")
+        calculator.process_input("sqrt 9")
         calculator.process_input("multiply 3 4")
         result = calculator.process_input("history")
         assert "add" in result
+        assert "sqrt" in result
         assert "multiply" in result
-        assert "2 calculation(s)" in result
+        assert "3 calculation(s)" in result
 
     def test_clear(self, calculator: Calculator) -> None:
         """'clear' removes all history."""

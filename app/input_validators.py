@@ -42,7 +42,7 @@ def validate_input_parts(parts: list[str]) -> str | None:
         )
 
     # Operations requiring one operand
-    if operation in ("sqrt",):
+    if operation in ("sqrt", "cube", "cbrt"):
         if len(parts) != 2:
             return (
                 f"Error: Invalid format for '{operation}'. Please use: {operation} <number>\n"

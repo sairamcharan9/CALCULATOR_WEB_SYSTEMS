@@ -6,7 +6,7 @@ Provides arithmetic operations as standalone functions and a registry
 dictionary that maps operation names to their callables (Strategy Pattern).
 
 Supported operations:
-    add, subtract, multiply, divide, power, root, percentage
+    add, subtract, multiply, divide, power, root, percentage, cube, cbrt
 
 The ``get_operation`` helper retrieves a callable by name.
 
@@ -126,6 +126,32 @@ def sqrt(a: Decimal) -> Decimal:
     return a.sqrt()
 
 
+def cube(a: Decimal) -> Decimal:
+    """Return the cube of *a*.
+
+    Examples:
+        >>> cube(Decimal('3'))
+        Decimal('27')
+    """
+    return a ** 3
+
+
+def cbrt(a: Decimal) -> Decimal:
+    """Return the cube root of *a*.
+
+    Uses ``a ** (1 / 3)``.
+
+    Examples:
+        >>> cbrt(Decimal('27'))
+        Decimal('3')
+    """
+    if a < 0:
+        # For Decimal, negative ** (1/3) might be tricky,
+        # but we can do -(abs(a) ** (1/3))
+        return -(abs(a) ** (Decimal("1") / Decimal("3")))
+    return a ** (Decimal("1") / Decimal("3"))
+
+
 # ---------------------------------------------------------------------------
 # Strategy registry
 # ---------------------------------------------------------------------------
@@ -140,6 +166,8 @@ OPERATIONS: dict[str, callable] = {
     "root": root,
     "percentage": percentage,
     "sqrt": sqrt,
+    "cube": cube,
+    "cbrt": cbrt,
 }
 
 

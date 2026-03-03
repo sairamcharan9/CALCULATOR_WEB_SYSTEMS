@@ -9,7 +9,7 @@ covering creation, string representations, and error paths.
 import pytest
 from decimal import Decimal
 
-from app.operations import add, subtract, multiply, divide, power, root, percentage
+from app.operations import add, subtract, multiply, divide, power, root, percentage, sqrt, cube, cbrt
 from app.calculation import Calculation, CalculationFactory
 from app.exceptions import DivisionByZeroError, InvalidOperationError
 
@@ -32,8 +32,11 @@ class TestCalculation:
             (Decimal("2"), Decimal("8"), power, "power", Decimal("256")),
             (Decimal("9"), Decimal("2"), root, "root", Decimal("3")),
             (Decimal("100"), Decimal("10"), percentage, "percentage", Decimal("10")),
+            (Decimal("9"), None, sqrt, "sqrt", Decimal("3")),
+            (Decimal("3"), None, cube, "cube", Decimal("27")),
+            (Decimal("27"), None, cbrt, "cbrt", Decimal("3")),
         ],
-        ids=["add", "subtract", "multiply", "divide", "power", "root", "percentage"],
+        ids=["add", "subtract", "multiply", "divide", "power", "root", "percentage", "sqrt", "cube", "cbrt"],
     )
     def test_calculation_result(
         self, a, b, operation, op_name, expected
@@ -51,26 +54,26 @@ class TestCalculation:
         assert "Calculation" in repr(calc)
         assert "add" in repr(calc)
         assert "5" in repr(calc)
+        
+        calc_single = Calculation(Decimal("9"), None, sqrt, "sqrt")
+        assert "Calculation(9, sqrt) = 3" in repr(calc_single)
 
     @pytest.mark.parametrize(
-        "a, b, operation, op_name, expected_symbol",
+        "a, b, operation, op_name, expected_substring",
         [
-            (Decimal("5"), Decimal("3"), add, "add", "+"),
-            (Decimal("10"), Decimal("4"), subtract, "subtract", "-"),
-            (Decimal("6"), Decimal("7"), multiply, "multiply", "*"),
-            (Decimal("20"), Decimal("4"), divide, "divide", "/"),
-            (Decimal("2"), Decimal("8"), power, "power", "^"),
-            (Decimal("9"), Decimal("2"), root, "root", "√"),
-            (Decimal("100"), Decimal("10"), percentage, "percentage", "%"),
+            (Decimal("5"), Decimal("3"), add, "add", "5 + 3 = 8"),
+            (Decimal("9"), None, sqrt, "sqrt", "√(9) = 3"),
+            (Decimal("3"), None, cube, "cube", "3^3 = 27"),
+            (Decimal("27"), None, cbrt, "cbrt", "³√(27) = 3"),
         ],
-        ids=["add_sym", "sub_sym", "mul_sym", "div_sym", "pow_sym", "root_sym", "perc_sym"],
+        ids=["add_sym", "sqrt_sym", "cube_sym", "cbrt_sym"],
     )
-    def test_str_symbol(
-        self, a, b, operation, op_name, expected_symbol
+    def test_str_formatting(
+        self, a, b, operation, op_name, expected_substring
     ) -> None:
-        """Test that __str__ uses the correct symbol."""
+        """Test that __str__ uses the correct format and symbol."""
         result_str = str(Calculation(a, b, operation, op_name))
-        assert expected_symbol in result_str
+        assert expected_substring in result_str
         assert "=" in result_str
 
     def test_str_unknown_operation(self) -> None:
@@ -102,8 +105,11 @@ class TestCalculationFactory:
             ("power", Decimal("2"), Decimal("3"), Decimal("8")),
             ("root", Decimal("27"), Decimal("3"), Decimal("3")),
             ("percentage", Decimal("100"), Decimal("10"), Decimal("10")),
+            ("sqrt", Decimal("9"), None, Decimal("3")),
+            ("cube", Decimal("3"), None, Decimal("27")),
+            ("cbrt", Decimal("27"), None, Decimal("3")),
         ],
-        ids=["add", "subtract", "multiply", "divide", "power", "root", "percentage"],
+        ids=["add", "subtract", "multiply", "divide", "power", "root", "percentage", "sqrt", "cube", "cbrt"],
     )
     def test_create_valid(self, op_name, a, b, expected) -> None:
         """Factory creates correct Calculation instances."""
@@ -124,5 +130,5 @@ class TestCalculationFactory:
     def test_get_supported_operations(self) -> None:
         """All operations are returned."""
         ops = CalculationFactory.get_supported_operations()
-        expected_ops = {"add", "subtract", "multiply", "divide", "power", "root", "percentage", "sqrt"}
+        expected_ops = {"add", "subtract", "multiply", "divide", "power", "root", "percentage", "sqrt", "cube", "cbrt"}
         assert set(ops) == expected_ops

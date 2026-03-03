@@ -146,12 +146,14 @@ class Calculator:
             print(validation_error)
             return validation_error
 
-        operation_name, raw_a, raw_b = parts[0], parts[1], parts[2]
+        operation_name = parts[0]
+        raw_a = parts[1]
+        raw_b = parts[2] if len(parts) == 3 else None
 
         # --- EAFP: attempt numeric conversion and calculation ---
         try:
             operand_a = Decimal(raw_a)
-            operand_b = Decimal(raw_b)
+            operand_b = Decimal(raw_b) if raw_b is not None else None
         except InvalidOperation:
             msg = (
                 f"Error: '{raw_a}' and/or '{raw_b}' are not valid numbers. "
@@ -184,7 +186,7 @@ class Calculator:
         help_text = (
             "=== Calculator Help ===\n"
             "\n"
-            "Usage: <operation> <number1> <number2>\n"
+            "Usage: <operation> <number1> [<number2>]\n"
             "\n"
             f"Operations: {', '.join(operations)}\n"
             "\n"
@@ -196,6 +198,9 @@ class Calculator:
             "  power 2 8      => 2 ^ 8 = 256\n"
             "  root 9 2       => 9 √ 2 = 3\n"
             "  percentage 200 10 => 200 % 10 = 20\n"
+            "  sqrt 9         => √ (9) = 3\n"
+            "  cube 3         => 3^3 = 27\n"
+            "  cbrt 27        => ³√ (27) = 3\n"
             "\n"
             "Special commands:\n"
             "  help / ?   - Show this help message\n"
@@ -220,10 +225,15 @@ class Calculator:
 
         lines = ["=== Calculation History ==="]
         for i, row in enumerate(rows, start=1):
-            lines.append(
-                f"  {i}. {row['operand_a']} {row['operation']} "
-                f"{row['operand_b']} = {row['result']}"
-            )
+            if row['operand_b'] is not None:
+                lines.append(
+                    f"  {i}. {row['operand_a']} {row['operation']} "
+                    f"{row['operand_b']} = {row['result']}"
+                )
+            else:
+                 lines.append(
+                    f"  {i}. {row['operation']}({row['operand_a']}) = {row['result']}"
+                )
         lines.append(f"\nTotal: {len(rows)} calculation(s)")
         history_text = "\n".join(lines)
         print(history_text)
