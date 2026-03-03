@@ -72,26 +72,26 @@ def divide(a: Decimal, b: Decimal) -> Decimal:
         raise DivisionByZeroError("Division by zero is not allowed.")
 
 
-def power(a: Decimal, b: Decimal) -> Decimal:
+def nth_power(a: Decimal, b: Decimal) -> Decimal:
     """Return *a* raised to the power *b*.
 
     Examples:
-        >>> power(Decimal('2'), Decimal('8'))
+        >>> nth_power(Decimal('2'), Decimal('8'))
         Decimal('256')
     """
     return a ** b
 
 
-def root(a: Decimal, b: Decimal) -> Decimal:
+def nth_root(a: Decimal, b: Decimal) -> Decimal:
     """Return the *b*-th root of *a*.
 
     Computes ``a ** (1 / b)``.
 
     Raises:
-        DivisionByZeroError: If *b* is zero.
+        DivisionByZeroError: If `b` is zero.
 
     Examples:
-        >>> root(Decimal('9'), Decimal('2'))
+        >>> nth_root(Decimal('9'), Decimal('2'))
         Decimal('3')
     """
     if b == 0:
@@ -162,8 +162,10 @@ OPERATIONS: dict[str, callable] = {
     "subtract": subtract,
     "multiply": multiply,
     "divide": divide,
-    "power": power,
-    "root": root,
+    "power": nth_power,  # Alias
+    "root": nth_root,    # Alias
+    "nth_power": nth_power,
+    "nth_root": nth_root,
     "percentage": percentage,
     "sqrt": sqrt,
     "cube": cube,

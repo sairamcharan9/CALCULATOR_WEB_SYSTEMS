@@ -9,7 +9,7 @@ covering creation, string representations, and error paths.
 import pytest
 from decimal import Decimal
 
-from app.operations import add, subtract, multiply, divide, power, root, percentage, sqrt, cube, cbrt
+from app.operations import add, subtract, multiply, divide, nth_power, nth_root, percentage, sqrt, cube, cbrt
 from app.calculation import Calculation, CalculationFactory
 from app.exceptions import DivisionByZeroError, InvalidOperationError
 
@@ -29,14 +29,14 @@ class TestCalculation:
             (Decimal("10"), Decimal("4"), subtract, "subtract", Decimal("6")),
             (Decimal("6"), Decimal("7"), multiply, "multiply", Decimal("42")),
             (Decimal("20"), Decimal("4"), divide, "divide", Decimal("5")),
-            (Decimal("2"), Decimal("8"), power, "power", Decimal("256")),
-            (Decimal("9"), Decimal("2"), root, "root", Decimal("3")),
+            (Decimal("2"), Decimal("8"), nth_power, "nth_power", Decimal("256")),
+            (Decimal("9"), Decimal("2"), nth_root, "nth_root", Decimal("3")),
             (Decimal("100"), Decimal("10"), percentage, "percentage", Decimal("10")),
             (Decimal("9"), None, sqrt, "sqrt", Decimal("3")),
             (Decimal("3"), None, cube, "cube", Decimal("27")),
             (Decimal("27"), None, cbrt, "cbrt", Decimal("3")),
         ],
-        ids=["add", "subtract", "multiply", "divide", "power", "root", "percentage", "sqrt", "cube", "cbrt"],
+        ids=["add", "subtract", "multiply", "divide", "nth_power", "nth_root", "percentage", "sqrt", "cube", "cbrt"],
     )
     def test_calculation_result(
         self, a, b, operation, op_name, expected
@@ -104,12 +104,14 @@ class TestCalculationFactory:
             ("divide", Decimal("10"), Decimal("2"), Decimal("5")),
             ("power", Decimal("2"), Decimal("3"), Decimal("8")),
             ("root", Decimal("27"), Decimal("3"), Decimal("3")),
+            ("nth_power", Decimal("2"), Decimal("3"), Decimal("8")),
+            ("nth_root", Decimal("27"), Decimal("3"), Decimal("3")),
             ("percentage", Decimal("100"), Decimal("10"), Decimal("10")),
             ("sqrt", Decimal("9"), None, Decimal("3")),
             ("cube", Decimal("3"), None, Decimal("27")),
             ("cbrt", Decimal("27"), None, Decimal("3")),
         ],
-        ids=["add", "subtract", "multiply", "divide", "power", "root", "percentage", "sqrt", "cube", "cbrt"],
+        ids=["add", "subtract", "multiply", "divide", "power_alias", "root_alias", "nth_power", "nth_root", "percentage", "sqrt", "cube", "cbrt"],
     )
     def test_create_valid(self, op_name, a, b, expected) -> None:
         """Factory creates correct Calculation instances."""
@@ -130,5 +132,5 @@ class TestCalculationFactory:
     def test_get_supported_operations(self) -> None:
         """All operations are returned."""
         ops = CalculationFactory.get_supported_operations()
-        expected_ops = {"add", "subtract", "multiply", "divide", "power", "root", "percentage", "sqrt", "cube", "cbrt"}
+        expected_ops = {"add", "subtract", "multiply", "divide", "power", "root", "nth_power", "nth_root", "percentage", "sqrt", "cube", "cbrt"}
         assert set(ops) == expected_ops
