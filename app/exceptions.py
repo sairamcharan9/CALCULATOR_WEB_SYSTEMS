@@ -9,6 +9,8 @@ Custom exception hierarchy for the calculator application.
 - InvalidInputError: raised for malformed input or non-numeric values.
 - DivisionByZeroError: wraps Python's built-in ZeroDivisionError.
 - ConfigurationError: raised for invalid or missing configuration.
+- OperationError: raised for errors during operation execution.
+- ValidationError: raised for input validation errors.
 """
 
 
@@ -30,3 +32,11 @@ class DivisionByZeroError(CalculationError):
 
 class ConfigurationError(CalculationError):
     """Raised when application configuration is invalid or missing."""
+
+
+class OperationError(CalculationError):
+    """Raised when an error occurs during an arithmetic operation."""
+
+
+class ValidationError(CalculationError):
+    """Raised when input fails validation checks."""

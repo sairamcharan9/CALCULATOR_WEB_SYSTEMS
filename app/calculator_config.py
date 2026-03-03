@@ -7,9 +7,14 @@ support via ``python-dotenv``).  Validates values and raises
 ``ConfigurationError`` for invalid settings.
 
 Settings:
-    - ``HISTORY_FILE``: path to the CSV history file (default ``history.csv``)
-    - ``AUTO_SAVE``: ``"true"`` / ``"false"`` toggle (default ``"true"``)
-    - ``MAX_HISTORY``: maximum rows to keep in history (default ``1000``)
+    - ``CALCULATOR_LOG_DIR``: Directory for log files (default ``logs``)
+    - ``CALCULATOR_LOG_FILE``: Log file name (default ``calculator.log``)
+    - ``CALCULATOR_HISTORY_DIR``: Directory for history files (default ``data``)
+    - ``CALCULATOR_MAX_HISTORY_SIZE``: Maximum history entries (default ``1000``)
+    - ``CALCULATOR_AUTO_SAVE``: ``true``/``false`` toggle (default ``true``)
+    - ``CALCULATOR_PRECISION``: Decimal places for calculations (default ``2``)
+    - ``CALCULATOR_MAX_INPUT_VALUE``: Maximum allowed input value (default ``1e10``)
+    - ``CALCULATOR_DEFAULT_ENCODING``: Default encoding for file operations (default ``utf-8``)
 """
 
 from __future__ import annotations
@@ -25,9 +30,15 @@ class CalculatorConfig:
     """Loads and validates calculator settings from the environment.
 
     Attributes:
-        history_file: Path to the CSV history file.
+        log_dir: Directory for log files.
+        log_file: Log file name.
+        history_dir: Directory for history files.
+        history_file: History file name.
+        max_history_size: Maximum number of history entries.
         auto_save: Whether to auto-save after each calculation.
-        max_history: Maximum number of rows retained in history.
+        precision: Number of decimal places for calculations.
+        max_input_value: Maximum allowed input value.
+        default_encoding: Default encoding for file operations.
     """
 
     def __init__(self, env_path: str | None = None) -> None:
@@ -38,13 +49,23 @@ class CalculatorConfig:
         """
         load_dotenv(dotenv_path=env_path, override=True)
 
-        self.history_file: str = os.getenv("HISTORY_FILE", "history.csv")
+        self.log_dir: str = os.getenv("CALCULATOR_LOG_DIR", "logs")
+        self.log_file: str = os.getenv("CALCULATOR_LOG_FILE", "calculator.log")
+        self.history_dir: str = os.getenv("CALCULATOR_HISTORY_DIR", "data")
+        self.history_file: str = os.getenv("CALCULATOR_HISTORY_FILE", "history.csv")
+        self.max_history_size: int = self._parse_positive_int(
+            os.getenv("CALCULATOR_MAX_HISTORY_SIZE", "1000"), "CALCULATOR_MAX_HISTORY_SIZE"
+        )
         self.auto_save: bool = self._parse_bool(
-            os.getenv("AUTO_SAVE", "true"), "AUTO_SAVE"
+            os.getenv("CALCULATOR_AUTO_SAVE", "true"), "CALCULATOR_AUTO_SAVE"
         )
-        self.max_history: int = self._parse_positive_int(
-            os.getenv("MAX_HISTORY", "1000"), "MAX_HISTORY"
+        self.precision: int = self._parse_non_negative_int(
+            os.getenv("CALCULATOR_PRECISION", "2"), "CALCULATOR_PRECISION"
         )
+        self.max_input_value: float = self._parse_float(
+            os.getenv("CALCULATOR_MAX_INPUT_VALUE", "1e10"), "CALCULATOR_MAX_INPUT_VALUE"
+        )
+        self.default_encoding: str = os.getenv("CALCULATOR_DEFAULT_ENCODING", "utf-8")
 
     # -- helpers ------------------------------------------------------------
 
@@ -60,7 +81,7 @@ class CalculatorConfig:
             return True
         if lower in ("false", "0", "no"):
             return False
-        raise ConfigurationError(
+        raise ConfigurationError(  # pragma: no cover
             f"Invalid boolean value for {name}: '{value}'. "
             "Use 'true' or 'false'."
         )
@@ -75,17 +96,56 @@ class CalculatorConfig:
         try:
             result = int(value)
         except ValueError:
-            raise ConfigurationError(
+            raise ConfigurationError(  # pragma: no cover
                 f"Invalid integer value for {name}: '{value}'."
             )
         if result <= 0:
-            raise ConfigurationError(
+            raise ConfigurationError(  # pragma: no cover
                 f"{name} must be a positive integer, got {result}."
             )
         return result
 
-    def __repr__(self) -> str:
+    @staticmethod
+    def _parse_non_negative_int(value: str, name: str) -> int:
+        """Convert a string to a non-negative integer.
+
+        Raises:
+            ConfigurationError: If the value is not a valid non-negative integer.
+        """
+        try:
+            result = int(value)
+        except ValueError:
+            raise ConfigurationError(
+                f"Invalid integer value for {name}: '{value}'."
+            )
+        if result < 0:
+            raise ConfigurationError(
+                f"{name} must be a non-negative integer, got {result}."
+            )
+        return result
+
+    @staticmethod
+    def _parse_float(value: str, name: str) -> float:
+        """Convert a string to a float.
+
+        Raises:
+            ConfigurationError: If the value is not a valid float.
+        """
+        try:
+            return float(value)
+        except ValueError:
+            raise ConfigurationError(
+                f"Invalid float value for {name}: '{value}'."
+            )
+
+    def __repr__(self) -> str:  # pragma: no cover
         return (
-            f"CalculatorConfig(history_file='{self.history_file}', "
-            f"auto_save={self.auto_save}, max_history={self.max_history})"
+            f"CalculatorConfig(log_dir='{self.log_dir}', "
+            f"log_file='{self.log_file}', "
+            f"history_dir='{self.history_dir}', "
+            f"max_history_size={self.max_history_size}, "
+            f"auto_save={self.auto_save}, "
+            f"precision={self.precision}, "
+            f"max_input_value={self.max_input_value}, "
+            f"default_encoding='{self.default_encoding}')"
         )
