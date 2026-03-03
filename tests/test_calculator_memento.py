@@ -23,7 +23,7 @@ from app.calculator_memento import CalculatorMemento, MementoCaretaker
 
 @pytest.fixture
 def history(tmp_path) -> CalculationHistory:
-    return CalculationHistory(csv_path=str(tmp_path / "test.csv"))
+    return CalculationHistory(history_dir=str(tmp_path), history_file="test.csv")
 
 
 @pytest.fixture
@@ -33,12 +33,12 @@ def caretaker(history: CalculationHistory) -> MementoCaretaker:
 
 @pytest.fixture
 def sample_calc() -> Calculation:
-    return Calculation(Decimal("2"), Decimal("3"), add, "add")
+    return Calculation(Decimal("2"), Decimal("3"), add, "add", precision=2)
 
 
 @pytest.fixture
 def sample_calc2() -> Calculation:
-    return Calculation(Decimal("10"), Decimal("4"), subtract, "subtract")
+    return Calculation(Decimal("10"), Decimal("4"), subtract, "subtract", precision=2)
 
 
 # ---------------------------------------------------------------------------

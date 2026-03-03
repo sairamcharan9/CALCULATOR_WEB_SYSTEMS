@@ -12,15 +12,17 @@ from decimal import Decimal, InvalidOperation
 from app.operations import get_supported_operations
 
 
-def validate_input_parts(parts: list[str]) -> str | None:
+def validate_input_parts(parts: list[str], max_value: float = 1e10) -> str | None:
     """Validate that *parts* has the correct format for a calculation.
 
     Checks:
         1. Correct number of tokens for the given operation.
         2. The first token is a recognized operation name.
+        3. Operands are within the allowed range.
 
     Args:
         parts: The tokenized user input.
+        max_value: Maximum allowed numeric value for operands.
 
     Returns:
         An error message string if invalid, or ``None`` if valid.
@@ -41,21 +43,20 @@ def validate_input_parts(parts: list[str]) -> str | None:
             "Type 'help' for more information."
         )
 
-    # Operations requiring one operand
-    if operation in ("sqrt", "cube", "cbrt"):
-        if len(parts) != 2:
-            return (
-                f"Error: Invalid format for '{operation}'. Please use: {operation} <number>\n"
-                f"Example: {operation} 9"
-            )
-    # Operations requiring two operands
-    else:
-        if len(parts) != 3:
-            return (
-                "Error: Invalid format. Please use: <operation> <number1> <number2>\n"
-                "Example: add 5 3\n"
-                "Type 'help' for available commands."
-            )
+    if len(parts) != 3:
+        return (
+            "Error: Invalid format. Please use: <operation> <number1> <number2>\n"
+            "Example: add 5 3\n"
+            "Type 'help' for available commands."
+        )
+
+    # Range validation
+    for i in [1, 2]:
+        val = validate_numeric(parts[i])
+        if val is None:
+            return f"Error: '{parts[i]}' is not a valid number."
+        if abs(val) > Decimal(str(max_value)):
+            return f"Error: Operand '{parts[i]}' exceeds the maximum allowed value of {max_value}."
 
     return None
 

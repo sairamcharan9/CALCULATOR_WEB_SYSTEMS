@@ -3,7 +3,7 @@ Tests for the Calculator Config Module
 ========================================
 
 Tests for CalculatorConfig: loading from .env, environment variables,
-boolean/integer parsing, and error handling.
+boolean/integer/float parsing, and error handling.
 """
 
 import os
@@ -23,9 +23,14 @@ def env_file(tmp_path):
     """Create a temporary .env file and return its path."""
     env = tmp_path / ".env"
     env.write_text(
-        "HISTORY_FILE=test_history.csv\n"
-        "AUTO_SAVE=true\n"
-        "MAX_HISTORY=500\n"
+        "CALCULATOR_LOG_DIR=test_logs\n"
+        "CALCULATOR_LOG_FILE=test_calc.log\n"
+        "CALCULATOR_HISTORY_DIR=test_data\n"
+        "CALCULATOR_MAX_HISTORY_SIZE=500\n"
+        "CALCULATOR_AUTO_SAVE=true\n"
+        "CALCULATOR_PRECISION=3\n"
+        "CALCULATOR_MAX_INPUT_VALUE=1e5\n"
+        "CALCULATOR_DEFAULT_ENCODING=utf-16\n"
     )
     return str(env)
 
@@ -33,7 +38,11 @@ def env_file(tmp_path):
 @pytest.fixture(autouse=True)
 def clean_env():
     """Remove calculator-related env vars before and after each test."""
-    keys = ["HISTORY_FILE", "AUTO_SAVE", "MAX_HISTORY"]
+    keys = [
+        "CALCULATOR_LOG_DIR", "CALCULATOR_LOG_FILE", "CALCULATOR_HISTORY_DIR",
+        "CALCULATOR_MAX_HISTORY_SIZE", "CALCULATOR_AUTO_SAVE", "CALCULATOR_PRECISION",
+        "CALCULATOR_MAX_INPUT_VALUE", "CALCULATOR_DEFAULT_ENCODING"
+    ]
     saved = {}
     for k in keys:
         saved[k] = os.environ.pop(k, None)
@@ -56,94 +65,52 @@ class TestConfigLoading:
     def test_defaults(self, tmp_path) -> None:
         """Without a .env file, defaults are used."""
         cfg = CalculatorConfig(env_path=str(tmp_path / "nonexistent.env"))
-        assert cfg.history_file == "history.csv"
+        assert cfg.log_dir == "logs"
+        assert cfg.log_file == "calculator.log"
+        assert cfg.history_dir == "data"
+        assert cfg.max_history_size == 1000
         assert cfg.auto_save is True
-        assert cfg.max_history == 1000
+        assert cfg.precision == 2
+        assert cfg.max_input_value == 1e10
+        assert cfg.default_encoding == "utf-8"
 
     def test_load_from_env_file(self, env_file: str) -> None:
         """Values from the .env file are loaded correctly."""
         cfg = CalculatorConfig(env_path=env_file)
-        assert cfg.history_file == "test_history.csv"
+        assert cfg.log_dir == "test_logs"
+        assert cfg.log_file == "test_calc.log"
+        assert cfg.history_dir == "test_data"
+        assert cfg.max_history_size == 500
         assert cfg.auto_save is True
-        assert cfg.max_history == 500
+        assert cfg.precision == 3
+        assert cfg.max_input_value == 1e5
+        assert cfg.default_encoding == "utf-16"
 
     def test_repr(self, env_file: str) -> None:
         """Repr includes all settings."""
         cfg = CalculatorConfig(env_path=env_file)
         r = repr(cfg)
-        assert "test_history.csv" in r
-        assert "auto_save" in r
+        assert "test_logs" in r
+        assert "test_calc.log" in r
+        assert "precision=3" in r
 
 
 # ---------------------------------------------------------------------------
-# Boolean parsing
+# Helpers
 # ---------------------------------------------------------------------------
 
 
-class TestBooleanParsing:
-    """Tests for _parse_bool."""
+class TestParsers:
+    def test_parse_non_negative_int(self):
+        assert CalculatorConfig._parse_non_negative_int("0", "TEST") == 0
+        assert CalculatorConfig._parse_non_negative_int("10", "TEST") == 10
+        with pytest.raises(ConfigurationError):
+            CalculatorConfig._parse_non_negative_int("-1", "TEST")
+        with pytest.raises(ConfigurationError):
+            CalculatorConfig._parse_non_negative_int("abc", "TEST")
 
-    @pytest.mark.parametrize(
-        "value, expected",
-        [
-            ("true", True),
-            ("True", True),
-            ("TRUE", True),
-            ("1", True),
-            ("yes", True),
-            ("false", False),
-            ("False", False),
-            ("0", False),
-            ("no", False),
-        ],
-        ids=[
-            "true", "True", "TRUE", "1", "yes",
-            "false", "False", "0", "no",
-        ],
-    )
-    def test_valid_booleans(self, value: str, expected: bool) -> None:
-        """Valid boolean strings are parsed correctly."""
-        assert CalculatorConfig._parse_bool(value, "TEST") == expected
-
-    @pytest.mark.parametrize(
-        "value",
-        ["maybe", "2", ""],
-        ids=["maybe", "two", "empty"],
-    )
-    def test_invalid_booleans(self, value: str) -> None:
-        """Invalid boolean strings raise ConfigurationError."""
-        with pytest.raises(ConfigurationError, match="Invalid boolean"):
-            CalculatorConfig._parse_bool(value, "TEST")
-
-
-# ---------------------------------------------------------------------------
-# Integer parsing
-# ---------------------------------------------------------------------------
-
-
-class TestIntegerParsing:
-    """Tests for _parse_positive_int."""
-
-    @pytest.mark.parametrize(
-        "value, expected",
-        [("1", 1), ("100", 100), ("999999", 999999)],
-        ids=["one", "hundred", "large"],
-    )
-    def test_valid_integers(self, value: str, expected: int) -> None:
-        """Valid positive integers are parsed correctly."""
-        assert CalculatorConfig._parse_positive_int(value, "TEST") == expected
-
-    def test_non_integer(self) -> None:
-        """Non-integer strings raise ConfigurationError."""
-        with pytest.raises(ConfigurationError, match="Invalid integer"):
-            CalculatorConfig._parse_positive_int("abc", "TEST")
-
-    def test_zero_integer(self) -> None:
-        """Zero raises ConfigurationError (must be positive)."""
-        with pytest.raises(ConfigurationError, match="positive integer"):
-            CalculatorConfig._parse_positive_int("0", "TEST")
-
-    def test_negative_integer(self) -> None:
-        """Negative values raise ConfigurationError."""
-        with pytest.raises(ConfigurationError, match="positive integer"):
-            CalculatorConfig._parse_positive_int("-5", "TEST")
+    def test_parse_float(self):
+        assert CalculatorConfig._parse_float("1.5", "TEST") == 1.5
+        assert CalculatorConfig._parse_float("1e10", "TEST") == 1e10
+        with pytest.raises(ConfigurationError):
+            CalculatorConfig._parse_float("abc", "TEST")

@@ -6,7 +6,8 @@ Provides arithmetic operations as standalone functions and a registry
 dictionary that maps operation names to their callables (Strategy Pattern).
 
 Supported operations:
-    add, subtract, multiply, divide, power, root, percentage, cube, cbrt
+    add, subtract, multiply, divide, power, root, modulus, int_divide,
+    percent, abs_diff
 
 The ``get_operation`` helper retrieves a callable by name.
 
@@ -99,57 +100,44 @@ def nth_root(a: Decimal, b: Decimal) -> Decimal:
     return a ** (Decimal("1") / b)
 
 
-def percentage(a: Decimal, b: Decimal) -> Decimal:
-    """Return *b* percent of *a*.
-
-    Computes ``a * (b / 100)``.
-
-    Examples:
-        >>> percentage(Decimal('200'), Decimal('10'))
-        Decimal('20')
-    """
-    return a * (b / Decimal("100"))
-
-
-def sqrt(a: Decimal) -> Decimal:
-    """Return the square root of *a*.
+def modulus(a: Decimal, b: Decimal) -> Decimal:
+    """Return the remainder of *a* / *b*.
 
     Raises:
-        InvalidOperationError: If *a* is negative.
-
-    Examples:
-        >>> sqrt(Decimal('9'))
-        Decimal('3')
+        DivisionByZeroError: If *b* is zero.
     """
-    if a < 0:
-        raise InvalidOperationError("Square root of a negative number is not allowed.")
-    return a.sqrt()
+    if b == 0:
+        raise DivisionByZeroError("Modulus by zero is not allowed.")
+    return a % b
 
 
-def cube(a: Decimal) -> Decimal:
-    """Return the cube of *a*.
+def int_divide(a: Decimal, b: Decimal) -> Decimal:
+    """Return the integer quotient of *a* / *b*.
 
-    Examples:
-        >>> cube(Decimal('3'))
-        Decimal('27')
+    Raises:
+        DivisionByZeroError: If *b* is zero.
     """
-    return a ** 3
+    if b == 0:
+        raise DivisionByZeroError("Integer division by zero is not allowed.")
+    return a // b
 
 
-def cbrt(a: Decimal) -> Decimal:
-    """Return the cube root of *a*.
+def percent(a: Decimal, b: Decimal) -> Decimal:
+    """Return the percentage of *a* with respect to *b*.
 
-    Uses ``a ** (1 / 3)``.
+    Computes ``(a / b) * 100``.
 
-    Examples:
-        >>> cbrt(Decimal('27'))
-        Decimal('3')
+    Raises:
+        DivisionByZeroError: If *b* is zero.
     """
-    if a < 0:
-        # For Decimal, negative ** (1/3) might be tricky,
-        # but we can do -(abs(a) ** (1/3))
-        return -(abs(a) ** (Decimal("1") / Decimal("3")))
-    return a ** (Decimal("1") / Decimal("3"))
+    if b == 0:
+        raise DivisionByZeroError("Percentage calculation with respect to zero is not allowed.")
+    return (a / b) * Decimal("100")
+
+
+def abs_diff(a: Decimal, b: Decimal) -> Decimal:
+    """Return the absolute difference between *a* and *b*."""
+    return abs(a - b)
 
 
 # ---------------------------------------------------------------------------
@@ -162,14 +150,12 @@ OPERATIONS: dict[str, callable] = {
     "subtract": subtract,
     "multiply": multiply,
     "divide": divide,
-    "power": nth_power,  # Alias
-    "root": nth_root,    # Alias
-    "nth_power": nth_power,
-    "nth_root": nth_root,
-    "percentage": percentage,
-    "sqrt": sqrt,
-    "cube": cube,
-    "cbrt": cbrt,
+    "power": nth_power,
+    "root": nth_root,
+    "modulus": modulus,
+    "int_divide": int_divide,
+    "percent": percent,
+    "abs_diff": abs_diff,
 }
 
 

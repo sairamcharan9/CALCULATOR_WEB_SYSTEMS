@@ -61,20 +61,26 @@ class Calculator:
             self.config = CalculatorConfig(env_path=env_path)
         except ConfigurationError:  # pragma: no cover
             # Fall back to safe defaults if config is broken
-            self.config = None  # pragma: no cover
-
-        history_file = self.config.history_file if self.config else "history.csv"
+            self.config = CalculatorConfig() # Will use defaults if .env is missing or broken
 
         # -- History (pandas) -----------------------------------------------
-        self.history = CalculationHistory(csv_path=history_file)
+        self.history = CalculationHistory(
+            history_dir=self.config.history_dir,
+            history_file=self.config.history_file,
+            encoding=self.config.default_encoding,
+            max_size=self.config.max_history_size
+        )
 
         # -- Observers ------------------------------------------------------
-        self.logging_observer = LoggingObserver()
+        self.logging_observer = LoggingObserver(
+            log_dir=self.config.log_dir,
+            log_file=self.config.log_file,
+            encoding=self.config.default_encoding
+        )
         self.history.add_observer(self.logging_observer)
 
-        if self.config and self.config.auto_save:
-            self.auto_save_observer = AutoSaveObserver(self.history)
-            self.history.add_observer(self.auto_save_observer)
+        self.auto_save_observer = AutoSaveObserver(self.history, enabled=self.config.auto_save)
+        self.history.add_observer(self.auto_save_observer)
 
         # -- Memento (undo / redo) ------------------------------------------
         self.caretaker = MementoCaretaker(self.history)
@@ -121,7 +127,11 @@ class Calculator:
         Returns:
             A feedback message string.
         """
-        command = user_input.strip().lower()
+        parts = user_input.strip().lower().split()
+        if not parts:
+            return ""
+
+        command = parts[0]
 
         # --- Handle special commands ---
         if command in ("help", "?"):
@@ -140,20 +150,19 @@ class Calculator:
             return self._handle_load()
 
         # --- LBYL: validate format ---
-        parts = command.split()
-        validation_error = validate_input_parts(parts)
+        validation_error = validate_input_parts(parts, self.config.max_input_value)
         if validation_error:
             print(validation_error)
             return validation_error
 
         operation_name = parts[0]
         raw_a = parts[1]
-        raw_b = parts[2] if len(parts) == 3 else None
+        raw_b = parts[2]
 
         # --- EAFP: attempt numeric conversion and calculation ---
         try:
             operand_a = Decimal(raw_a)
-            operand_b = Decimal(raw_b) if raw_b is not None else None
+            operand_b = Decimal(raw_b)
         except InvalidOperation:
             msg = (
                 f"Error: '{raw_a}' and/or '{raw_b}' are not valid numbers. "
@@ -165,7 +174,7 @@ class Calculator:
         try:
             # Save state before mutation (for undo)
             self.caretaker.save()
-            calc = CalculationFactory.create(operand_a, operand_b, operation_name)
+            calc = CalculationFactory.create(operand_a, operand_b, operation_name, self.config.precision)
         except CalculationError as exc:
             msg = f"Error: {exc}"
             print(msg)
@@ -186,21 +195,21 @@ class Calculator:
         help_text = (
             "=== Calculator Help ===\n"
             "\n"
-            "Usage: <operation> <number1> [<number2>]\n"
+            "Usage: <operation> <number1> <number2>\n"
             "\n"
             f"Operations: {', '.join(operations)}\n"
             "\n"
             "Examples:\n"
-            "  add 5 3        => 5 + 3 = 8\n"
-            "  subtract 10 4  => 10 - 4 = 6\n"
-            "  multiply 6 7   => 6 * 7 = 42\n"
-            "  divide 20 4    => 20 / 4 = 5\n"
-            "  power 2 8      => 2 ^ 8 = 256\n"
-            "  root 9 2       => 9 √ 2 = 3\n"
-            "  percentage 200 10 => 200 % 10 = 20\n"
-            "  sqrt 9         => √ (9) = 3\n"
-            "  cube 3         => 3^3 = 27\n"
-            "  cbrt 27        => ³√ (27) = 3\n"
+            "  add 5 3        => 5 + 3 = 8.00\n"
+            "  subtract 10 4  => 10 - 4 = 6.00\n"
+            "  multiply 6 7   => 6 * 7 = 42.00\n"
+            "  divide 20 4    => 20 / 4 = 5.00\n"
+            "  power 2 8      => 2 ^ 8 = 256.00\n"
+            "  root 9 2       => 9 √ 2 = 3.00\n"
+            "  modulus 10 3   => 10 % 3 = 1.00\n"
+            "  int_divide 10 3 => 10 // 3 = 3.00\n"
+            "  percent 5 100  => 5 %% 100 = 5.00\n"
+            "  abs_diff 5 10  => 5 |-| 10 = 5.00\n"
             "\n"
             "Special commands:\n"
             "  help / ?   - Show this help message\n"
@@ -225,17 +234,10 @@ class Calculator:
 
         lines = ["=== Calculation History ==="]
         for i, row in enumerate(rows, start=1):
-            # Unary operations (sqrt, cube, etc.) have no second operand.
-            # Due to pandas/CSV storage, this might be None, "None", or "".
-            if row['operand_b'] is not None and str(row['operand_b']) not in ("None", ""):
-                lines.append(
-                    f"  {i}. {row['operand_a']} {row['operation']} "
-                    f"{row['operand_b']} = {row['result']}"
-                )
-            else:
-                 lines.append(
-                    f"  {i}. {row['operation']}({row['operand_a']}) = {row['result']}"
-                )
+            lines.append(
+                f"  {i}. [{row['timestamp']}] {row['operand_a']} {row['operation']} "
+                f"{row['operand_b']} = {row['result']}"
+            )
         lines.append(f"\nTotal: {len(rows)} calculation(s)")
         history_text = "\n".join(lines)
         print(history_text)

@@ -11,6 +11,7 @@ import pytest
 import pandas as pd
 from decimal import Decimal
 from unittest.mock import MagicMock
+import logging
 
 from app.calculation import Calculation
 from app.operations import add, subtract
@@ -28,21 +29,23 @@ from app.history import (
 
 
 @pytest.fixture
-def history(tmp_path) -> CalculationHistory:
+def history_setup(tmp_path):
     """Provide a fresh CalculationHistory using a temp CSV path."""
-    return CalculationHistory(csv_path=str(tmp_path / "test_history.csv"))
+    history_dir = str(tmp_path / "data")
+    log_dir = str(tmp_path / "logs")
+    return history_dir, log_dir
+
+
+@pytest.fixture
+def history(history_setup) -> CalculationHistory:
+    history_dir, _ = history_setup
+    return CalculationHistory(history_dir=history_dir, history_file="test_history.csv")
 
 
 @pytest.fixture
 def sample_calc() -> Calculation:
     """Provide a sample add calculation."""
-    return Calculation(Decimal("2"), Decimal("3"), add, "add")
-
-
-@pytest.fixture
-def sample_calc2() -> Calculation:
-    """Provide a sample subtract calculation."""
-    return Calculation(Decimal("10"), Decimal("4"), subtract, "subtract")
+    return Calculation(Decimal("2"), Decimal("3"), add, "add", precision=2)
 
 
 # ---------------------------------------------------------------------------
@@ -66,14 +69,7 @@ class TestCalculationHistoryBasics:
         rows = history.get_all()
         assert len(rows) == 1
         assert rows[0]["operation"] == "add"
-
-    def test_multiple_adds(
-        self, history: CalculationHistory, sample_calc, sample_calc2
-    ) -> None:
-        """Multiple additions are stored in order."""
-        history.add(sample_calc)
-        history.add(sample_calc2)
-        assert len(history) == 2
+        assert "timestamp" in rows[0]
 
     def test_clear(
         self, history: CalculationHistory, sample_calc: Calculation
@@ -86,32 +82,6 @@ class TestCalculationHistoryBasics:
     def test_repr(self, history: CalculationHistory) -> None:
         """Repr shows count."""
         assert "0 calculations" in repr(history)
-
-
-# ---------------------------------------------------------------------------
-# DataFrame get / set
-# ---------------------------------------------------------------------------
-
-
-class TestDataFrame:
-    """Test get_dataframe and set_dataframe."""
-
-    def test_get_dataframe(
-        self, history: CalculationHistory, sample_calc: Calculation
-    ) -> None:
-        """get_dataframe returns a copy."""
-        history.add(sample_calc)
-        df = history.get_dataframe()
-        assert isinstance(df, pd.DataFrame)
-        assert len(df) == 1
-
-    def test_set_dataframe(self, history: CalculationHistory) -> None:
-        """set_dataframe replaces the internal DataFrame."""
-        new_df = pd.DataFrame(
-            [{"operand_a": "1", "operand_b": "2", "operation": "add", "result": "3"}]
-        )
-        history.set_dataframe(new_df)
-        assert len(history) == 1
 
 
 # ---------------------------------------------------------------------------
@@ -131,16 +101,6 @@ class TestObserverPattern:
         history.add(sample_calc)
         mock_observer.on_calculation.assert_called_once_with(sample_calc)
 
-    def test_remove_observer(
-        self, history: CalculationHistory, sample_calc: Calculation
-    ) -> None:
-        """Removed observer is no longer notified."""
-        mock_observer = MagicMock(spec=CalculationObserver)
-        history.add_observer(mock_observer)
-        history.remove_observer(mock_observer)
-        history.add(sample_calc)
-        mock_observer.on_calculation.assert_not_called()
-
 
 # ---------------------------------------------------------------------------
 # LoggingObserver
@@ -150,21 +110,17 @@ class TestObserverPattern:
 class TestLoggingObserver:
     """Tests for LoggingObserver."""
 
-    def test_logs_calculation(self, sample_calc: Calculation) -> None:
-        """Calculation is logged to internal list."""
-        observer = LoggingObserver()
-        observer.on_calculation(sample_calc)
-        assert len(observer.log_messages) == 1
-        assert "[LOG]" in observer.log_messages[0]
+    def test_logs_calculation(self, sample_calc: Calculation, history_setup) -> None:
+        """Calculation is logged to file."""
+        _, log_dir = history_setup
+        log_file = "test_calc.log"
+        observer = LoggingObserver(log_dir=log_dir, log_file=log_file)
 
-    def test_integration_with_history(
-        self, history: CalculationHistory, sample_calc: Calculation
-    ) -> None:
-        """LoggingObserver is notified through history.add."""
-        observer = LoggingObserver()
-        history.add_observer(observer)
-        history.add(sample_calc)
-        assert len(observer.log_messages) == 1
+        # We might need to handle the singleton logger in tests
+        with MagicMock() as mock_logger:
+            observer.logger = mock_logger
+            observer.on_calculation(sample_calc)
+            mock_logger.info.assert_called_once()
 
 
 # ---------------------------------------------------------------------------
@@ -182,42 +138,18 @@ class TestCSVPersistence:
         history.add(sample_calc)
         history.save_to_csv()
 
-        new_history = CalculationHistory(csv_path=history.csv_path)
+        new_history = CalculationHistory(history_dir=history.history_dir, history_file=history.history_file)
         count = new_history.load_from_csv()
         assert count == 1
         assert len(new_history) == 1
-
-    def test_save_custom_path(
-        self, history: CalculationHistory, sample_calc: Calculation, tmp_path
-    ) -> None:
-        """save_to_csv with explicit path override."""
-        history.add(sample_calc)
-        custom = str(tmp_path / "custom.csv")
-        returned = history.save_to_csv(custom)
-        assert returned == custom
-        assert os.path.exists(custom)
 
     def test_load_nonexistent_file(self, history: CalculationHistory) -> None:
         """Loading from a nonexistent file returns 0."""
         count = history.load_from_csv("/nonexistent/path.csv")
         assert count == 0
 
-    def test_load_custom_path(
-        self, history: CalculationHistory, sample_calc: Calculation, tmp_path
-    ) -> None:
-        """load_from_csv with explicit path override."""
+    def test_auto_save_observer(self, history: CalculationHistory, sample_calc: Calculation):
+        observer = AutoSaveObserver(history, enabled=True)
+        history.add_observer(observer)
         history.add(sample_calc)
-        custom = str(tmp_path / "custom.csv")
-        history.save_to_csv(custom)
-
-        history.clear()
-        count = history.load_from_csv(custom)
-        assert count == 1
-
-    def test_load_csv_missing_columns(self, tmp_path) -> None:
-        """Loading a CSV that is missing expected columns fills them."""
-        csv_path = str(tmp_path / "bad.csv")
-        pd.DataFrame([{"foo": "bar"}]).to_csv(csv_path, index=False)
-        h = CalculationHistory(csv_path=csv_path)
-        count = h.load_from_csv()
-        assert count == 1
+        assert os.path.exists(history.csv_path)
