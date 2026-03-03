@@ -225,7 +225,9 @@ class Calculator:
 
         lines = ["=== Calculation History ==="]
         for i, row in enumerate(rows, start=1):
-            if row['operand_b'] is not None:
+            # Unary operations (sqrt, cube, etc.) have no second operand.
+            # Due to pandas/CSV storage, this might be None, "None", or "".
+            if row['operand_b'] is not None and str(row['operand_b']) not in ("None", ""):
                 lines.append(
                     f"  {i}. {row['operand_a']} {row['operation']} "
                     f"{row['operand_b']} = {row['result']}"

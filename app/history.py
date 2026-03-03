@@ -55,7 +55,10 @@ class LoggingObserver(CalculationObserver):
         msg = f"[LOG] {calculation}"
         self.log_messages.append(msg)
         self.logger.info("Calculation: %s", calculation)
-        print(msg)
+        try:
+            print(msg)
+        except UnicodeEncodeError:
+            print(msg.encode('ascii', errors='replace').decode('ascii'))
 
 
 class AutoSaveObserver(CalculationObserver):
