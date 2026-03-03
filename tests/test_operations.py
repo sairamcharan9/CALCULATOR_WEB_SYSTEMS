@@ -20,8 +20,8 @@ from app.operations import (
     subtract,
     multiply,
     divide,
-    power,
-    root,
+    nth_power,
+    nth_root,
     percentage,
     sqrt,
     cube,
@@ -133,7 +133,7 @@ def test_divide_by_zero() -> None:
 
 
 # ---------------------------------------------------------------------------
-# power
+# nth_power
 # ---------------------------------------------------------------------------
 
 
@@ -147,13 +147,13 @@ def test_divide_by_zero() -> None:
     ],
     ids=["2^8", "n^0", "n^1", "3^3"],
 )
-def test_power(a: Decimal, b: Decimal, expected: Decimal) -> None:
+def test_nth_power(a: Decimal, b: Decimal, expected: Decimal) -> None:
     """Test power with various inputs."""
-    assert power(a, b) == expected
+    assert nth_power(a, b) == expected
 
 
 # ---------------------------------------------------------------------------
-# root
+# nth_root
 # ---------------------------------------------------------------------------
 
 
@@ -166,15 +166,15 @@ def test_power(a: Decimal, b: Decimal, expected: Decimal) -> None:
     ],
     ids=["sqrt_9", "cbrt_27", "root_1"],
 )
-def test_root(a: Decimal, b: Decimal, expected: Decimal) -> None:
+def test_nth_root(a: Decimal, b: Decimal, expected: Decimal) -> None:
     """Test root with various inputs."""
-    assert root(a, b) == expected
+    assert nth_root(a, b) == expected
 
 
 def test_root_by_zero() -> None:
     """Test that root with degree zero raises DivisionByZeroError."""
     with pytest.raises(DivisionByZeroError):
-        root(Decimal("9"), Decimal("0"))
+        nth_root(Decimal("9"), Decimal("0"))
 
 
 # ---------------------------------------------------------------------------
@@ -291,8 +291,8 @@ class TestStrategyRegistry:
 
     @pytest.mark.parametrize(
         "name",
-        ["add", "subtract", "multiply", "divide", "power", "root", "percentage", "sqrt", "cube", "cbrt"],
-        ids=["add", "subtract", "multiply", "divide", "power", "root", "percentage", "sqrt", "cube", "cbrt"],
+        ["add", "subtract", "multiply", "divide", "power", "root", "nth_power", "nth_root", "percentage", "sqrt", "cube", "cbrt"],
+        ids=["add", "subtract", "multiply", "divide", "power", "root", "nth_power", "nth_root", "percentage", "sqrt", "cube", "cbrt"],
     )
     def test_get_operation_valid(self, name: str) -> None:
         """Known names return a callable."""
@@ -307,9 +307,9 @@ class TestStrategyRegistry:
     def test_get_supported_operations(self) -> None:
         """All operations are returned."""
         ops = get_supported_operations()
-        expected_ops = {"add", "subtract", "multiply", "divide", "power", "root", "percentage", "sqrt", "cube", "cbrt"}
+        expected_ops = {"add", "subtract", "multiply", "divide", "power", "root", "nth_power", "nth_root", "percentage", "sqrt", "cube", "cbrt"}
         assert set(ops) == expected_ops
 
     def test_operations_dict(self) -> None:
         """OPERATIONS dict contains all expected keys."""
-        assert len(OPERATIONS) == 10
+        assert len(OPERATIONS) == 12

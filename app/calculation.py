@@ -33,6 +33,8 @@ class Calculation:
         "divide": "/",
         "power": "^",
         "root": "√",
+        "nth_power": "^",
+        "nth_root": "√",
         "percentage": "%",
         "sqrt": "√",
         "cube": "^3",
