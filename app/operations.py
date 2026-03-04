@@ -1,150 +1,102 @@
 """
-Operations Module (Strategy Pattern)
-=====================================
+Arithmetic Operations (Strategy Pattern)
+========================================
 
-Provides arithmetic operations as standalone functions and a registry
-dictionary that maps operation names to their callables (Strategy Pattern).
+This module implements the Strategy design pattern for handling arithmetic
+operations. Each operation is a separate function (a "strategy") that takes
+two `Decimal` numbers and returns a `Decimal` result.
 
-Supported operations:
-    add, subtract, multiply, divide, power, root, modulus, int_divide,
-    percent, abs_diff
+A central dictionary, `OPERATIONS`, acts as a registry that maps operation
+names (like "add", "subtract") to their corresponding functions. This allows
+for easy extension—adding a new operation only requires defining a new function
+and adding it to the `OPERATIONS` dictionary.
 
-The ``get_operation`` helper retrieves a callable by name.
-
-Error handling follows EAFP — for example, ``divide`` does not pre-check
-for a zero divisor; callers handle the ``ZeroDivisionError``.
+Error handling follows an "Easier to Ask for Forgiveness than Permission"
+(EAFP) approach. For example, the `divide` function does not
+check for a zero divisor beforehand; instead, it relies on the caller to
+handle the `ZeroDivisionError` that `Decimal` would raise.
 """
 
-from decimal import Decimal
-
+from decimal import Decimal, InvalidOperation as DecimalInvalidOperation
 from app.exceptions import DivisionByZeroError, InvalidOperationError
 
-
-# ---------------------------------------------------------------------------
-# Arithmetic functions
-# ---------------------------------------------------------------------------
-
+# --- Arithmetic Functions (Strategies) ---
 
 def add(a: Decimal, b: Decimal) -> Decimal:
-    """Return the sum of *a* and *b*.
-
-    Examples:
-        >>> add(Decimal('2'), Decimal('3'))
-        Decimal('5')
-    """
+    """Returns the sum of two Decimal numbers."""
     return a + b
 
-
 def subtract(a: Decimal, b: Decimal) -> Decimal:
-    """Return the difference *a* − *b*.
-
-    Examples:
-        >>> subtract(Decimal('5'), Decimal('3'))
-        Decimal('2')
-    """
+    """Returns the difference between two Decimal numbers."""
     return a - b
 
-
 def multiply(a: Decimal, b: Decimal) -> Decimal:
-    """Return the product *a* × *b*.
-
-    Examples:
-        >>> multiply(Decimal('4'), Decimal('3'))
-        Decimal('12')
-    """
+    """Returns the product of two Decimal numbers."""
     return a * b
 
-
 def divide(a: Decimal, b: Decimal) -> Decimal:
-    """Return the quotient *a* ÷ *b*.
-
-    Uses EAFP: does **not** pre-check for a zero divisor.
-
-    Raises:
-        DivisionByZeroError: If *b* is zero.
-
-    Examples:
-        >>> divide(Decimal('10'), Decimal('2'))
-        Decimal('5')
     """
+    Returns the quotient of two Decimal numbers.
+    Raises `DivisionByZeroError` if the divisor is zero.
+    """
+    if b == Decimal(0):
+        raise DivisionByZeroError("Cannot divide by zero.")
     try:
         return a / b
-    except Exception:
-        raise DivisionByZeroError("Division by zero is not allowed.")
-
+    except DecimalInvalidOperation as e:
+        # Catch other potential decimal errors, e.g., invalid contexts
+        raise InvalidOperationError(f"Invalid division operation: {e}")
 
 def nth_power(a: Decimal, b: Decimal) -> Decimal:
-    """Return *a* raised to the power *b*.
-
-    Examples:
-        >>> nth_power(Decimal('2'), Decimal('8'))
-        Decimal('256')
-    """
+    """Returns the base `a` raised to the power of `b`."""
     return a ** b
 
-
 def nth_root(a: Decimal, b: Decimal) -> Decimal:
-    """Return the *b*-th root of *a*.
-
-    Computes ``a ** (1 / b)``.
-
-    Raises:
-        DivisionByZeroError: If `b` is zero.
-
-    Examples:
-        >>> nth_root(Decimal('9'), Decimal('2'))
-        Decimal('3')
     """
-    if b == 0:
-        raise DivisionByZeroError("Root degree cannot be zero.")
-    return a ** (Decimal("1") / b)
-
+    Calculates the `b`-th root of `a`.
+    Raises `DivisionByZeroError` if `b` is zero.
+    """
+    if b == Decimal(0):
+        raise DivisionByZeroError("The root degree cannot be zero.")
+    if a < 0 and b % 2 == 0:
+        raise InvalidOperationError("Cannot calculate an even root of a negative number.")
+    return a ** (Decimal(1) / b)
 
 def modulus(a: Decimal, b: Decimal) -> Decimal:
-    """Return the remainder of *a* / *b*.
-
-    Raises:
-        DivisionByZeroError: If *b* is zero.
     """
-    if b == 0:
-        raise DivisionByZeroError("Modulus by zero is not allowed.")
+    Returns the remainder of the division of `a` by `b`.
+    Raises `DivisionByZeroError` if `b` is zero.
+    """
+    if b == Decimal(0):
+        raise DivisionByZeroError("Cannot perform modulus operation with zero.")
     return a % b
 
-
 def int_divide(a: Decimal, b: Decimal) -> Decimal:
-    """Return the integer quotient of *a* / *b*.
-
-    Raises:
-        DivisionByZeroError: If *b* is zero.
     """
-    if b == 0:
-        raise DivisionByZeroError("Integer division by zero is not allowed.")
+    Returns the integer part of the quotient of `a` divided by `b`.
+    Raises `DivisionByZeroError` if `b` is zero.
+    """
+    if b == Decimal(0):
+        raise DivisionByZeroError("Cannot perform integer division by zero.")
     return a // b
 
-
 def percent(a: Decimal, b: Decimal) -> Decimal:
-    """Return the percentage of *a* with respect to *b*.
-
-    Computes ``(a / b) * 100``.
-
-    Raises:
-        DivisionByZeroError: If *b* is zero.
     """
-    if b == 0:
-        raise DivisionByZeroError("Percentage calculation with respect to zero is not allowed.")
-    return (a / b) * Decimal("100")
-
+    Calculates what percentage `a` is of `b`.
+    Raises `DivisionByZeroError` if `b` is zero.
+    """
+    if b == Decimal(0):
+        raise DivisionByZeroError("Cannot calculate a percentage of zero.")
+    return (a / b) * Decimal(100)
 
 def abs_diff(a: Decimal, b: Decimal) -> Decimal:
-    """Return the absolute difference between *a* and *b*."""
+    """Returns the absolute difference between `a` and `b`."""
     return abs(a - b)
 
+# --- Strategy Registry and Dispatchers ---
 
-# ---------------------------------------------------------------------------
-# Strategy registry
-# ---------------------------------------------------------------------------
-
-
+# The OPERATIONS dictionary acts as a registry for all arithmetic functions (strategies).
+# This is the core of the Strategy pattern, allowing for dynamic dispatch of operations.
 OPERATIONS: dict[str, callable] = {
     "add": add,
     "subtract": subtract,
@@ -158,28 +110,27 @@ OPERATIONS: dict[str, callable] = {
     "abs_diff": abs_diff,
 }
 
-
-def get_operation(name: str) -> callable:
-    """Look up an operation callable by *name*.
+def get_operation(operation_name: str) -> callable:
+    """
+    Retrieves an arithmetic function from the `OPERATIONS` registry.
 
     Args:
-        name: The operation name (case-sensitive, lower-case expected).
+        operation_name (str): The name of the operation to retrieve.
 
     Returns:
-        The corresponding arithmetic function.
+        callable: The function corresponding to the operation name.
 
     Raises:
-        InvalidOperationError: If *name* is not in the registry.
+        InvalidOperationError: If the `operation_name` is not found in the registry.
     """
-    operation = OPERATIONS.get(name)
-    if operation is None:
-        supported = ", ".join(OPERATIONS.keys())
+    operation_func = OPERATIONS.get(operation_name)
+    if not operation_func:
         raise InvalidOperationError(
-            f"Unknown operation '{name}'. Supported: {supported}"
+            f"Unknown operation: '{operation_name}'. Supported operations are: "
+            f"{', '.join(get_supported_operations())}"
         )
-    return operation
-
+    return operation_func
 
 def get_supported_operations() -> list[str]:
-    """Return a sorted list of supported operation names."""
-    return list(OPERATIONS.keys())
+    """Returns a sorted list of the names of all supported operations."""
+    return sorted(OPERATIONS.keys())

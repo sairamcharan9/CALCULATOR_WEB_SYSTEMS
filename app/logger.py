@@ -1,36 +1,34 @@
 """
-Logging Module
-==============
+Centralized Logging Configuration
+=================================
 
 Provides a centralized logger factory for the calculator application.
 
-All modules obtain their logger via ``get_logger(name)`` so that the
-entire application shares a consistent format, file handler, and log
-level hierarchy.
+The primary goal of this module is to ensure that the entire application shares
+a single, consistent logging setup. All modules should obtain their logger via
+the `get_logger(name)` function. This creates a parent-child relationship
+with the root "calculator" logger, ensuring that all log messages are processed
+by the same handlers and formatters.
 
-Logger hierarchy
-----------------
-- ``calculator``          — root app logger
-- ``calculator.history``  — LoggingObserver (existing)
-- ``calculator.config``   — CalculatorConfig startup events
-- ``calculator.repl``     — REPL command processing, errors, undo/redo
-- ``calculator.memento``  — Undo/redo state transitions
+Logger Hierarchy Example:
+  - `calculator` (root application logger)
+    - `calculator.repl` (for the REPL interface)
+    - `calculator.history` (for history events)
+    - ... and so on for other modules.
 """
 
 from __future__ import annotations
-
 import logging
 import os
 
-# ---------------------------------------------------------------------------
-# Module-level sentinel so we configure the root handler only once
-# ---------------------------------------------------------------------------
-_configured = False
+# This flag ensures that the logging configuration is applied only once per application run.
+_is_configured = False
 
+# Default logging settings, used if not overridden by configuration.
 _DEFAULT_LOG_DIR = "logs"
 _DEFAULT_LOG_FILE = "calculator.log"
 _DEFAULT_ENCODING = "utf-8"
-_LOG_FORMAT = "%(asctime)s | %(levelname)-8s | %(name)s | %(message)s"
+_LOG_FORMAT = "%(asctime)s | %(levelname)-8s | %(name)-15s | %(message)s"
 _DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
 
 
@@ -38,83 +36,83 @@ def configure_logging(
     log_dir: str = _DEFAULT_LOG_DIR,
     log_file: str = _DEFAULT_LOG_FILE,
     encoding: str = _DEFAULT_ENCODING,
-    level: int = logging.DEBUG,
+    level: int = logging.INFO,
 ) -> None:
-    """Configure the root ``calculator`` logger.
+    """
+    Configures the root 'calculator' logger with file and stream handlers.
 
-    Sets up a ``FileHandler`` and a ``StreamHandler`` (WARNING+) on the
-    ``calculator`` parent logger.  Child loggers (``calculator.repl``,
-    ``calculator.history``, etc.) inherit this configuration automatically.
-
-    Safe to call multiple times — subsequent calls are no-ops unless
-    *force* is used via ``reconfigure_logging()``.
+    This function is safe to call multiple times; it will only configure the
+    logger on the first call. It sets up a `FileHandler` to log all messages
+    (from the specified level) to a file and a `StreamHandler` to output messages
+    of WARNING level and higher to the console.
 
     Args:
-        log_dir: Directory where the log file is created.
-        log_file: Name of the log file.
-        encoding: File encoding for the log file.
-        level: Minimum log level written to the file (default ``DEBUG``).
+        log_dir (str): The directory where the log file will be created.
+        log_file (str): The name of the log file.
+        encoding (str): The file encoding for the log file.
+        level (int): The minimum log level to be captured by the file handler.
     """
-    global _configured
-    if _configured:
+    global _is_configured
+    if _is_configured:
         return
 
     os.makedirs(log_dir, exist_ok=True)
     log_path = os.path.join(log_dir, log_file)
 
-    root = logging.getLogger("calculator")
-    root.setLevel(level)
+    # Get the root logger for the application namespace.
+    root_logger = logging.getLogger("calculator")
+    root_logger.setLevel(level)
 
+    # Create a consistent formatter for all handlers.
     formatter = logging.Formatter(_LOG_FORMAT, datefmt=_DATE_FORMAT)
 
-    # File handler — captures DEBUG and above
+    # File handler: Captures all logs from the specified level.
     file_handler = logging.FileHandler(log_path, encoding=encoding)
     file_handler.setLevel(level)
     file_handler.setFormatter(formatter)
-    root.addHandler(file_handler)
+    root_logger.addHandler(file_handler)
 
-    # Stream handler — only WARNING and above go to console
+    # Stream handler: Outputs WARNING and higher to the console.
     stream_handler = logging.StreamHandler()
     stream_handler.setLevel(logging.WARNING)
     stream_handler.setFormatter(formatter)
-    root.addHandler(stream_handler)
+    root_logger.addHandler(stream_handler)
 
-    _configured = True
+    _is_configured = True
 
 
-def reconfigure_logging(
-    log_dir: str = _DEFAULT_LOG_DIR,
-    log_file: str = _DEFAULT_LOG_FILE,
-    encoding: str = _DEFAULT_ENCODING,
-    level: int = logging.DEBUG,
-) -> None:
-    """Force-reconfigure the root ``calculator`` logger.
+def reconfigure_logging(**kwargs) -> None:
+    """
+    Force-reconfigures the root 'calculator' logger.
 
-    Removes any existing handlers and re-applies configuration.  Useful
-    when the ``CalculatorConfig`` has loaded a different log path.
+    This function is useful when settings (like the log file path) change after
+    the initial configuration, for instance, after loading a `.env` file. It
+    resets the configuration and applies new settings.
 
     Args:
-        log_dir: Directory where the log file is created.
-        log_file: Name of the log file.
-        encoding: File encoding for the log file.
-        level: Minimum log level written to the file.
+        **kwargs: Keyword arguments matching the parameters of `configure_logging`.
     """
-    global _configured
-    root = logging.getLogger("calculator")
-    for handler in root.handlers[:]:
+    global _is_configured
+    root_logger = logging.getLogger("calculator")
+
+    # Safely close and remove all existing handlers associated with the root logger.
+    for handler in root_logger.handlers[:]:
         handler.close()
-        root.removeHandler(handler)
-    _configured = False
-    configure_logging(log_dir=log_dir, log_file=log_file, encoding=encoding, level=level)
+        root_logger.removeHandler(handler)
+
+    # Reset the configuration flag and re-run the configuration.
+    _is_configured = False
+    configure_logging(**kwargs)
 
 
 def get_logger(name: str) -> logging.Logger:
-    """Return a child logger under the ``calculator`` namespace.
+    """
+    Factory function to get a logger instance within the 'calculator' namespace.
 
     Args:
-        name: Sub-logger name, e.g. ``"repl"`` → ``calculator.repl``.
+        name (str): The specific name for the child logger (e.g., 'repl', 'history').
 
     Returns:
-        A ``logging.Logger`` instance.
+        logging.Logger: A configured logger instance.
     """
     return logging.getLogger(f"calculator.{name}")

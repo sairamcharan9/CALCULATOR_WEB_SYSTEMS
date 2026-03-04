@@ -164,8 +164,11 @@ class CalculationHistory:
     def get_calculations(self) -> list[Calculation]:
         """Reconstructs and returns the history as a list of `Calculation` objects."""
         calculations = []
-        for _, row in self._df.iterrows():
-            calculations.append(self._dict_to_calculation(row.to_dict()))
+        for index, row in self._df.iterrows():
+            try:
+                calculations.append(self._dict_to_calculation(row.to_dict()))
+            except Exception as e:
+                logging.warning("Skipping malformed history row #%d: %s | Error: %s", index, row.to_dict(), e)
         return calculations
 
     def get_dataframe(self) -> pd.DataFrame:
@@ -183,6 +186,10 @@ class CalculationHistory:
     def __len__(self) -> int:
         """Returns the number of calculations in the history."""
         return len(self._df)
+
+    def __repr__(self) -> str:
+        """Returns a string representation of the history object."""
+        return f"CalculationHistory({len(self._df)} calculations)"
 
     def save_to_csv(self, path: str | None = None) -> str:
         """Saves the history to a CSV file."""
