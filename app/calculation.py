@@ -17,7 +17,8 @@ from decimal import Decimal, ROUND_HALF_UP
 from typing import Callable, Optional
 from datetime import datetime
 
-from app.operations import get_operation, get_supported_operations
+from app.command_loader import command_manager
+from app.exceptions import InvalidOperationError
 
 
 class Calculation:
@@ -138,10 +139,11 @@ class CalculationFactory:
         Raises:
             InvalidOperationError: If the requested operation name is not supported.
         """
-        # Look up the operation function from the operations module
-        operation_func = get_operation(operation_name)
-        # Instantiate and return a Calculation object
-        return Calculation(operand_a, operand_b, operation_func, operation_name, precision)
+        command = command_manager.get_command(operation_name)
+        if not command or "<" not in command.usage:  # Basic check for an arithmetic command
+            raise InvalidOperationError(f"Unknown or non-arithmetic operation: '{operation_name}'")
+        
+        return Calculation(operand_a, operand_b, command.handler, operation_name, precision)
 
     @staticmethod
     def get_supported_operations() -> list[str]:
@@ -151,4 +153,5 @@ class CalculationFactory:
         Returns:
             list[str]: A list of strings, where each string is a supported operation name.
         """
-        return get_supported_operations()
+        # Filter for commands that look like arithmetic operations
+        return [cmd.name for cmd in command_manager.get_all_commands() if "<" in cmd.usage]

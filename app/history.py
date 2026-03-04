@@ -28,7 +28,7 @@ import pandas as pd
 
 from app.calculation import Calculation
 from app.logger import get_logger
-from app.operations import get_operation
+from app.command_loader import command_manager
 
 class CalculationObserver(ABC):
     """
@@ -227,11 +227,16 @@ class CalculationHistory:
 
     def _dict_to_calculation(self, row: dict) -> Calculation:
         """Converts a dictionary (from a DataFrame row) back to a Calculation object."""
+        command_name = row["operation"]
+        command = command_manager.get_command(command_name)
+        if not command:
+            raise ValueError(f"Unknown operation '{command_name}' in history.")
+
         calc = Calculation(
             Decimal(row["operand_a"]),
             Decimal(row["operand_b"]),
-            get_operation(row["operation"]),
-            row["operation"],
+            command.handler,
+            command_name,
         )
         # Manually set the stored result and timestamp
         calc.result = Decimal(row["result"])

@@ -9,9 +9,13 @@ covering creation, string representations, and error paths.
 import pytest
 from decimal import Decimal
 
-from app.operations import add, subtract, multiply, divide, nth_power, nth_root, modulus, int_divide, percent, abs_diff
+from app import load_plugins
+# Import the operation functions directly for testing Calculation results
+from app.operations import add, subtract, multiply, divide, nth_power, nth_root, modulus, int_divide, percent, abs_diff 
 from app.calculation import Calculation, CalculationFactory
 from app.exceptions import DivisionByZeroError, InvalidOperationError
+
+load_plugins()
 
 
 # ===========================================================================
@@ -109,8 +113,17 @@ class TestCalculationFactory:
         with pytest.raises(InvalidOperationError):
             CalculationFactory.create(Decimal("1"), Decimal("2"), "unknown")
 
+    def test_create_non_arithmetic_command(self):
+        """Trying to create a calculation with a non-arithmetic command raises an error."""
+        # The 'greet' command exists but is not an arithmetic operation
+        with pytest.raises(InvalidOperationError):
+            CalculationFactory.create(Decimal("1"), Decimal("2"), "greet")
+
     def test_get_supported_operations(self) -> None:
-        """All operations are returned."""
+        """Verify that all and only arithmetic operations are returned."""
         ops = CalculationFactory.get_supported_operations()
         expected_ops = {"add", "subtract", "multiply", "divide", "power", "root", "modulus", "int_divide", "percent", "abs_diff"}
         assert set(ops) == expected_ops
+        
+        # Check that a non-arithmetic command like 'greet' is not included
+        assert "greet" not in ops

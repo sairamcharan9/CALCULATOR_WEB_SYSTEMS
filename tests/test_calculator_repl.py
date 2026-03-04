@@ -13,8 +13,11 @@ import pytest
 from decimal import Decimal
 from unittest.mock import patch, MagicMock
 
+from app import load_plugins
 from app.calculator_repl import Calculator
 from app.exceptions import CalculationError
+
+load_plugins()
 
 
 @pytest.fixture
@@ -118,6 +121,7 @@ class TestCalculatorREPL:
 
     def test_invalid_input(self, calculator: Calculator) -> None:
         """Invalid commands/operands return error messages."""
+        assert "Invalid number of arguments" in calculator.process_input("add 1")
         assert "Unknown operation" in calculator.process_input("unknown 1 2")
         assert "not a valid number" in calculator.process_input("add abc 1")
 

@@ -18,25 +18,27 @@ handle the `ZeroDivisionError` that `Decimal` would raise.
 """
 
 from decimal import Decimal, InvalidOperation as DecimalInvalidOperation
+
+from app.commands import command
 from app.exceptions import DivisionByZeroError, InvalidOperationError
 
 # --- Arithmetic Functions (Strategies) ---
 
+@command("add", "Returns the sum of two Decimal numbers.", "add <n1> <n2>")
 def add(a: Decimal, b: Decimal) -> Decimal:
-    """Returns the sum of two Decimal numbers."""
     return a + b
 
+@command("subtract", "Returns the difference between two Decimal numbers.", "subtract <n1> <n2>")
 def subtract(a: Decimal, b: Decimal) -> Decimal:
-    """Returns the difference between two Decimal numbers."""
     return a - b
 
+@command("multiply", "Returns the product of two Decimal numbers.", "multiply <n1> <n2>")
 def multiply(a: Decimal, b: Decimal) -> Decimal:
-    """Returns the product of two Decimal numbers."""
     return a * b
 
+@command("divide", "Returns the quotient of two Decimal numbers.", "divide <n1> <n2>")
 def divide(a: Decimal, b: Decimal) -> Decimal:
     """
-    Returns the quotient of two Decimal numbers.
     Raises `DivisionByZeroError` if the divisor is zero.
     """
     if b == Decimal(0):
@@ -47,13 +49,13 @@ def divide(a: Decimal, b: Decimal) -> Decimal:
         # Catch other potential decimal errors, e.g., invalid contexts
         raise InvalidOperationError(f"Invalid division operation: {e}")
 
+@command("power", "Returns the base `a` raised to the power of `b`.", "power <base> <exp>")
 def nth_power(a: Decimal, b: Decimal) -> Decimal:
-    """Returns the base `a` raised to the power of `b`."""
     return a ** b
 
+@command("root", "Calculates the `b`-th root of `a`.", "root <num> <n>")
 def nth_root(a: Decimal, b: Decimal) -> Decimal:
     """
-    Calculates the `b`-th root of `a`.
     Raises `DivisionByZeroError` if `b` is zero.
     """
     if b == Decimal(0):
@@ -62,75 +64,33 @@ def nth_root(a: Decimal, b: Decimal) -> Decimal:
         raise InvalidOperationError("Cannot calculate an even root of a negative number.")
     return a ** (Decimal(1) / b)
 
+@command("modulus", "Returns the remainder of the division of `a` by `b`.", "modulus <n1> <n2>")
 def modulus(a: Decimal, b: Decimal) -> Decimal:
     """
-    Returns the remainder of the division of `a` by `b`.
     Raises `DivisionByZeroError` if `b` is zero.
     """
     if b == Decimal(0):
         raise DivisionByZeroError("Cannot perform modulus operation with zero.")
     return a % b
 
+@command("int_divide", "Returns the integer part of the quotient of `a` divided by `b`.", "int_divide <n1> <n2>")
 def int_divide(a: Decimal, b: Decimal) -> Decimal:
     """
-    Returns the integer part of the quotient of `a` divided by `b`.
     Raises `DivisionByZeroError` if `b` is zero.
     """
     if b == Decimal(0):
         raise DivisionByZeroError("Cannot perform integer division by zero.")
     return a // b
 
+@command("percent", "Calculates what percentage `a` is of `b`.", "percent <n1> <n2>")
 def percent(a: Decimal, b: Decimal) -> Decimal:
     """
-    Calculates what percentage `a` is of `b`.
     Raises `DivisionByZeroError` if `b` is zero.
     """
     if b == Decimal(0):
         raise DivisionByZeroError("Cannot calculate a percentage of zero.")
     return (a / b) * Decimal(100)
 
+@command("abs_diff", "Returns the absolute difference between `a` and `b`.", "abs_diff <n1> <n2>")
 def abs_diff(a: Decimal, b: Decimal) -> Decimal:
-    """Returns the absolute difference between `a` and `b`."""
     return abs(a - b)
-
-# --- Strategy Registry and Dispatchers ---
-
-# The OPERATIONS dictionary acts as a registry for all arithmetic functions (strategies).
-# This is the core of the Strategy pattern, allowing for dynamic dispatch of operations.
-OPERATIONS: dict[str, callable] = {
-    "add": add,
-    "subtract": subtract,
-    "multiply": multiply,
-    "divide": divide,
-    "power": nth_power,
-    "root": nth_root,
-    "modulus": modulus,
-    "int_divide": int_divide,
-    "percent": percent,
-    "abs_diff": abs_diff,
-}
-
-def get_operation(operation_name: str) -> callable:
-    """
-    Retrieves an arithmetic function from the `OPERATIONS` registry.
-
-    Args:
-        operation_name (str): The name of the operation to retrieve.
-
-    Returns:
-        callable: The function corresponding to the operation name.
-
-    Raises:
-        InvalidOperationError: If the `operation_name` is not found in the registry.
-    """
-    operation_func = OPERATIONS.get(operation_name)
-    if not operation_func:
-        raise InvalidOperationError(
-            f"Unknown operation: '{operation_name}'. Supported operations are: "
-            f"{', '.join(get_supported_operations())}"
-        )
-    return operation_func
-
-def get_supported_operations() -> list[str]:
-    """Returns a sorted list of the names of all supported operations."""
-    return sorted(OPERATIONS.keys())

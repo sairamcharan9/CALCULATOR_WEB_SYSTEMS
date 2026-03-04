@@ -1,269 +1,246 @@
 """
-Tests for the History Module
-==============================
+Tests for the Calculation History Module
+========================================
 
-Tests for CalculationHistory (pandas-backed), observer notifications,
-LoggingObserver, CSV save/load, and DataFrame get/set.
+This module contains tests for the `CalculationHistory` and its related
+observer classes. It covers basic history management (add, clear),
+observer notifications, and CSV persistence.
 """
 
-import os
 import pytest
-import pandas as pd
+from unittest.mock import MagicMock, patch
 from decimal import Decimal
-from unittest.mock import MagicMock
-import logging
+import pandas as pd
 
+from app import load_plugins
 from app.calculation import Calculation
-from app.operations import add, subtract
 from app.history import (
     CalculationHistory,
-    CalculationObserver,
     LoggingObserver,
     AutoSaveObserver,
 )
 
+load_plugins()
 
-# ---------------------------------------------------------------------------
+# Dummy calculation for testing
+def dummy_op(a, b): return a + b
+
+# ===========================================================================
 # Fixtures
-# ---------------------------------------------------------------------------
-
-
-@pytest.fixture
-def history_setup(tmp_path):
-    """Provide a fresh CalculationHistory using a temp CSV path."""
-    history_dir = str(tmp_path / "data")
-    log_dir = str(tmp_path / "logs")
-    return history_dir, log_dir
-
+# ===========================================================================
 
 @pytest.fixture
-def history(history_setup) -> CalculationHistory:
-    history_dir, _ = history_setup
-    return CalculationHistory(history_dir=history_dir, history_file="test_history.csv")
-
+def history(tmp_path):
+    """Provides a fresh CalculationHistory instance for each test."""
+    return CalculationHistory(
+        history_dir=str(tmp_path), history_file="test_hist.csv"
+    )
 
 @pytest.fixture
-def sample_calc() -> Calculation:
-    """Provide a sample add calculation."""
-    return Calculation(Decimal("2"), Decimal("3"), add, "add", precision=2)
+def sample_calc():
+    """Provides a sample Calculation object for testing."""
+    return Calculation(Decimal("2"), Decimal("3"), dummy_op, "add")
 
-
-# ---------------------------------------------------------------------------
-# CalculationHistory basic operations
-# ---------------------------------------------------------------------------
-
+# ===========================================================================
+# Test Cases
+# ===========================================================================
 
 class TestCalculationHistoryBasics:
-    """Test add, get_all, clear, len, repr."""
+    """Tests for core history management functions."""
 
-    def test_empty_history(self, history: CalculationHistory) -> None:
-        """New history is empty."""
+    def test_empty_history(self, history: CalculationHistory):
+        """History should be empty on initialization."""
         assert len(history) == 0
         assert history.get_all() == []
 
-    def test_add_and_get_all(
-        self, history: CalculationHistory, sample_calc: Calculation
-    ) -> None:
-        """Adding a calculation appears in get_all."""
+    def test_add_and_get_all(self, history: CalculationHistory, sample_calc: Calculation):
+        """Test adding a calculation and retrieving the full history."""
         history.add(sample_calc)
-        rows = history.get_all()
-        assert len(rows) == 1
-        assert rows[0]["operation"] == "add"
-        assert "timestamp" in rows[0]
+        assert len(history) == 1
+        
+        # Verify the content of the history
+        records = history.get_all()
+        assert len(records) == 1
+        assert records[0]["operation"] == "add"
+        assert records[0]["operand_a"] == "2"
 
-    def test_clear(
-        self, history: CalculationHistory, sample_calc: Calculation
-    ) -> None:
-        """Clearing removes all rows."""
+    def test_clear(self, history: CalculationHistory, sample_calc: Calculation):
+        """Test that clear() removes all entries."""
         history.add(sample_calc)
+        assert len(history) == 1
+        
         history.clear()
         assert len(history) == 0
 
-    def test_repr(self, history: CalculationHistory) -> None:
-        """Repr shows count."""
-        assert "0 calculations" in repr(history)
+    def test_repr(self, history: CalculationHistory, sample_calc: Calculation):
+        """Test the __repr__ method for a meaningful representation."""
+        history.add(sample_calc)
+        assert "1 calculations" in repr(history)
 
-    def test_get_calculations(self, history: CalculationHistory, sample_calc: Calculation) -> None:
-        """get_calculations returns Calculation instances."""
+    def test_get_calculations(self, history: CalculationHistory, sample_calc: Calculation):
+        """Test reconstructing Calculation objects from history."""
         history.add(sample_calc)
         calcs = history.get_calculations()
         assert len(calcs) == 1
-        assert isinstance(calcs[0], Calculation)
         assert calcs[0].result == sample_calc.result
 
-
-# ---------------------------------------------------------------------------
-# Observer pattern
-# ---------------------------------------------------------------------------
-
-
 class TestObserverPattern:
-    """Test observer registration and notification."""
+    """Tests for the observer notification mechanism."""
 
-    def test_add_and_notify_observer(
-        self, history: CalculationHistory, sample_calc: Calculation
-    ) -> None:
-        """Observer's on_calculation is called when a calc is added."""
-        mock_observer = MagicMock(spec=CalculationObserver)
-        history.add_observer(mock_observer)
+    def test_add_and_notify_observer(self, history: CalculationHistory, sample_calc: Calculation):
+        """Test that an observer is notified when a calculation is added."""
+        # Create a mock observer
+        observer = MagicMock()
+        history.add_observer(observer)
+        
+        # Add a calculation, which should trigger notification
         history.add(sample_calc)
-        mock_observer.on_calculation.assert_called_once_with(sample_calc)
-
-
-# ---------------------------------------------------------------------------
-# LoggingObserver
-# ---------------------------------------------------------------------------
-
+        
+        # Verify that the observer's on_calculation method was called once
+        observer.on_calculation.assert_called_once_with(sample_calc)
 
 class TestLoggingObserver:
-    """Tests for LoggingObserver."""
+    """Tests for the logging observer."""
 
-    def test_logs_calculation(self, sample_calc: Calculation, history_setup) -> None:
-        """Calculation is logged to file."""
-        _, log_dir = history_setup
-        log_file = "test_calc.log"
-        observer = LoggingObserver(log_dir=log_dir, log_file=log_file)
-
-        # We might need to handle the singleton logger in tests
-        with MagicMock() as mock_logger:
-            observer.logger = mock_logger
-            observer.on_calculation(sample_calc)
-            mock_logger.info.assert_called_once()
-
-
-# ---------------------------------------------------------------------------
-# CSV persistence
-# ---------------------------------------------------------------------------
-
+    @patch("app.history.get_logger")
+    def test_logs_calculation(self, mock_get_logger, sample_calc: Calculation):
+        """Test that the LoggingObserver logs the calculation."""
+        # Mock the logger that the observer will use
+        mock_logger = MagicMock()
+        mock_get_logger.return_value = mock_logger
+        
+        # Create the observer and call its method
+        observer = LoggingObserver()
+        observer.on_calculation(sample_calc)
+        
+        # Check that the logger's info method was called
+        mock_logger.info.assert_called_once()
+        # Verify that the log message contains the string representation of the calculation
+        args, _ = mock_logger.info.call_args
+        assert args[1] == sample_calc
 
 class TestCSVPersistence:
-    """Tests for save_to_csv and load_from_csv."""
+    """Tests for saving to and loading from CSV files."""
 
-    def test_save_and_load(
-        self, history: CalculationHistory, sample_calc: Calculation
-    ) -> None:
-        """Saving and loading preserves data."""
+    def test_save_and_load(self, history: CalculationHistory, sample_calc: Calculation):
+        """Test saving the history to a CSV and loading it back."""
         history.add(sample_calc)
-        history.save_to_csv()
+        
+        # Save to CSV
+        save_path = history.save_to_csv()
+        assert save_path.endswith("test_hist.csv")
 
-        new_history = CalculationHistory(history_dir=history.history_dir, history_file=history.history_file)
-        count = new_history.load_from_csv()
-        assert count == 1
+        # Create a new history object and load from the saved file
+        new_history = CalculationHistory(history_dir=history.history_dir, history_file="test_hist.csv")
+        loaded_count = new_history.load_from_csv()
+        
+        assert loaded_count == 1
         assert len(new_history) == 1
+        assert new_history.get_all()[0]["operation"] == "add"
 
-    def test_load_nonexistent_file(self, history: CalculationHistory) -> None:
-        """Loading from a nonexistent file returns 0."""
-        count = history.load_from_csv("/nonexistent/path.csv")
+    def test_load_nonexistent_file(self, history: CalculationHistory):
+        """Loading a nonexistent file should result in an empty history."""
+        count = history.load_from_csv("nonexistent_file.csv")
         assert count == 0
+        assert len(history) == 0
 
     def test_auto_save_observer(self, history: CalculationHistory, sample_calc: Calculation):
-        observer = AutoSaveObserver(history, enabled=True)
-        history.add_observer(observer)
-        history.add(sample_calc)
-        assert os.path.exists(history.csv_path)
+        """Test that AutoSaveObserver saves history when a calculation is added."""
+        # Spy on the save_to_csv method
+        with patch.object(history, 'save_to_csv', MagicMock()) as mock_save:
+            observer = AutoSaveObserver(history, enabled=True)
+            history.add_observer(observer)
+            
+            history.add(sample_calc)
+            
+            # Verify that save was called
+            mock_save.assert_called_once()
 
-    def test_save_to_custom_path_creates_dirs(self, history: CalculationHistory, sample_calc: Calculation, tmp_path) -> None:
-        """save_to_csv creates intermediate directories when they don't exist."""
-        custom_path = str(tmp_path / "deep" / "nested" / "history.csv")
-        history.add(sample_calc)
-        returned = history.save_to_csv(path=custom_path)
-        assert returned == custom_path
-        assert os.path.exists(custom_path)
+    def test_save_to_custom_path_creates_dirs(self, history: CalculationHistory, tmp_path):
+        """Test that save_to_csv can create directories if they don't exist."""
+        custom_path = tmp_path / "new_dir" / "custom_history.csv"
+        history.save_to_csv(str(custom_path))
+        assert custom_path.exists()
 
-    def test_load_from_csv_exception_returns_zero(self, history: CalculationHistory, tmp_path) -> None:
-        """load_from_csv returns 0 and does not raise if reading fails."""
-        from unittest.mock import patch
-        bad_path = str(tmp_path / "trigger_exc.csv")
-        with open(bad_path, "w") as f:
-            f.write("timestamp,operand_a,operand_b,operation,result\n")
-        with patch("pandas.read_csv", side_effect=ValueError("Simulated read error")):
-            count = history.load_from_csv(path=bad_path)
+    def test_load_from_csv_exception_returns_zero(self, history, tmp_path):
+        """If pd.read_csv fails, load_from_csv should return 0 and clear history."""
+        path = tmp_path / "corrupted.csv"
+        path.write_text("this is not a valid csv")
+        
+        count = history.load_from_csv(str(path))
         assert count == 0
+        assert len(history) == 0
 
-    def test_add_trims_to_max_size(self, tmp_path) -> None:
-        """add() trims history to max_size when it exceeds the limit."""
-        history = CalculationHistory(history_dir=str(tmp_path / "data"), history_file="h.csv", max_size=2)
-        calcs = [
-            Calculation(Decimal(str(i)), Decimal("1"), add, "add", precision=2)
-            for i in range(4)
-        ]
-        for c in calcs:
-            history.add(c)
+    def test_add_trims_to_max_size(self):
+        """History should not grow beyond max_size."""
+        history = CalculationHistory(max_size=2)
+        history.add(Calculation(Decimal(1), Decimal(1), dummy_op, "add"))
+        history.add(Calculation(Decimal(2), Decimal(2), dummy_op, "add"))
+        history.add(Calculation(Decimal(3), Decimal(3), dummy_op, "add")) # This should push the first one out
+        
         assert len(history) == 2
+        records = history.get_all()
+        assert records[0]['operand_a'] == '2' # The first one should be gone
 
-    def test_load_from_csv_trims_to_max_size(self, tmp_path) -> None:
-        """load_from_csv enforces max_size on load."""
-        history = CalculationHistory(history_dir=str(tmp_path / "data"), history_file="h.csv", max_size=2)
-        rows = [{"timestamp": "2024-01-01 00:00:00", "operand_a": str(i), "operand_b": "1", "operation": "add", "result": str(i + 1)} for i in range(5)]
-        csv_path = str(tmp_path / "data" / "h.csv")
-        os.makedirs(str(tmp_path / "data"), exist_ok=True)
-        pd.DataFrame(rows).to_csv(csv_path, index=False)
+    def test_load_from_csv_trims_to_max_size(self, tmp_path):
+        """Loading a CSV larger than max_size should trim it."""
+        path = tmp_path / "large.csv"
+        df = pd.DataFrame({
+            'timestamp': ['2023-01-01 12:00:00'] * 3,
+            'operand_a': [1, 2, 3], 'operand_b': [1, 2, 3],
+            'operation': ['add'] * 3, 'result': [2, 4, 6]
+        })
+        df.to_csv(path, index=False)
+        
+        history = CalculationHistory(history_dir=str(tmp_path), history_file="large.csv", max_size=2)
         count = history.load_from_csv()
+        
         assert count == 2
         assert len(history) == 2
 
-    def test_load_from_csv_with_missing_columns(self, history: CalculationHistory, tmp_path) -> None:
-        """Loading a CSV that is missing some expected columns fills them with empty string."""
-        csv_path = str(tmp_path / "partial.csv")
-        pd.DataFrame([{"timestamp": "2024-01-01 00:00:00", "operand_a": "1", "operand_b": "2", "operation": "add"}]).to_csv(csv_path, index=False)
-        count = history.load_from_csv(path=csv_path)
-        assert count == 1
-        rows = history.get_all()
-        assert "result" in rows[0]
-
-
-# ---------------------------------------------------------------------------
-# Observer pattern — remove_observer
-# ---------------------------------------------------------------------------
-
+    def test_load_from_csv_with_missing_columns(self, tmp_path):
+        """Loading a CSV with missing columns should fill them with empty strings."""
+        path = tmp_path / "missing_cols.csv"
+        df = pd.DataFrame({'operand_a': [1], 'operation': ['add']})
+        df.to_csv(path, index=False)
+        
+        history = CalculationHistory(history_dir=str(tmp_path), history_file="missing_cols.csv")
+        history.load_from_csv()
+        
+        record = history.get_all()[0]
+        assert record['operand_b'] == ""
+        assert record['result'] == ""
 
 class TestObserverRemoval:
-    """Tests for remove_observer."""
-
-    def test_remove_observer_stops_notifications(self, history: CalculationHistory, sample_calc: Calculation) -> None:
-        """Removed observer is no longer called on new calculations."""
-        mock_observer = MagicMock(spec=CalculationObserver)
-        history.add_observer(mock_observer)
+    def test_remove_observer_stops_notifications(self, history, sample_calc):
+        """An observer should not be notified after it has been removed."""
+        observer = MagicMock()
+        history.add_observer(observer)
+        history.remove_observer(observer)
         history.add(sample_calc)
-        assert mock_observer.on_calculation.call_count == 1
-
-        history.remove_observer(mock_observer)
-        history.add(sample_calc)
-        assert mock_observer.on_calculation.call_count == 1
-
-
-# ---------------------------------------------------------------------------
-# get_calculations
-# ---------------------------------------------------------------------------
-
+        observer.on_calculation.assert_not_called()
 
 class TestGetCalculations:
-    """Tests for CalculationHistory.get_calculations()."""
-
-    def test_get_calculations_empty(self, history: CalculationHistory) -> None:
-        """Empty history returns empty list."""
+    def test_get_calculations_empty(self, history):
+        """get_calculations should return an empty list for an empty history."""
         assert history.get_calculations() == []
 
-    def test_get_calculations_multiple(self, history: CalculationHistory) -> None:
-        """get_calculations returns all stored rows as Calculation objects."""
-        calc1 = Calculation(Decimal("2"), Decimal("3"), add, "add", precision=2)
-        calc2 = Calculation(Decimal("10"), Decimal("4"), subtract, "subtract", precision=2)
-        history.add(calc1)
-        history.add(calc2)
+    def test_get_calculations_multiple(self, history):
+        """Test reconstructing multiple Calculation objects."""
+        history.add(Calculation(Decimal("2"), Decimal("3"), dummy_op, "add"))
+        history.add(Calculation(Decimal("10"), Decimal("4"), dummy_op, "subtract"))
+        
         calcs = history.get_calculations()
         assert len(calcs) == 2
         assert calcs[0].operation_name == "add"
         assert calcs[1].operation_name == "subtract"
 
-    def test_get_calculations_malformed_row_skipped(self, history: CalculationHistory) -> None:
-        """Rows with invalid data are skipped without raising."""
-        bad_row = pd.DataFrame([{
-            "timestamp": "2024-01-01 00:00:00",
-            "operand_a": "not_a_number",
-            "operand_b": "1",
-            "operation": "unknown_op",
-            "result": "42",
-        }])
-        history._df = pd.concat([history._df, bad_row], ignore_index=True)
+    def test_get_calculations_malformed_row_skipped(self, history, caplog):
+        """A row that can't be converted to a Calculation should be skipped."""
+        # Manually create a malformed DataFrame
+        bad_df = pd.DataFrame([{"operation": "add", "operand_a": "two", "operand_b": "3"}])
+        history.set_dataframe(bad_df)
+        
         calcs = history.get_calculations()
-        assert calcs == []
+        assert len(calcs) == 0
+        assert "Skipping malformed history row" in caplog.text

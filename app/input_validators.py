@@ -14,7 +14,7 @@ to the user.
 """
 
 from decimal import Decimal, InvalidOperation
-from app.operations import get_supported_operations
+from app.calculation import CalculationFactory
 
 
 def validate_input_parts(parts: list[str], max_value: float = 1e10) -> str | None:
@@ -37,7 +37,7 @@ def validate_input_parts(parts: list[str], max_value: float = 1e10) -> str | Non
         return "Error: No input provided. Please enter a command."
 
     operation = parts[0]
-    valid_operations = get_supported_operations()
+    valid_operations = CalculationFactory.get_supported_operations()
 
     # Check if the operation is supported.
     if operation not in valid_operations:

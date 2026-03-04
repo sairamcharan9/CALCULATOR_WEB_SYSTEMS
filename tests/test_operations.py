@@ -10,6 +10,8 @@ percent, abs_diff — including edge cases.
 import pytest
 from decimal import Decimal
 
+from app import load_plugins
+from app.command_loader import command_manager
 from app.exceptions import DivisionByZeroError, InvalidOperationError
 from app.operations import (
     add,
@@ -22,11 +24,12 @@ from app.operations import (
     int_divide,
     percent,
     abs_diff,
-    get_operation,
-    get_supported_operations,
-    OPERATIONS,
 )
 
+@pytest.fixture(autouse=True)
+def setup_teardown():
+    command_manager.clear_commands()
+    load_plugins()
 
 # ---------------------------------------------------------------------------
 # add
@@ -220,24 +223,20 @@ def test_abs_diff(a: Decimal, b: Decimal, expected: Decimal) -> None:
 
 
 # ---------------------------------------------------------------------------
-# Strategy registry helpers
+# Command Registration
 # ---------------------------------------------------------------------------
 
 
-class TestStrategyRegistry:
-    @pytest.mark.parametrize(
-        "name",
-        ["add", "subtract", "multiply", "divide", "power", "root", "modulus", "int_divide", "percent", "abs_diff"],
-    )
-    def test_get_operation_valid(self, name: str) -> None:
-        func = get_operation(name)
-        assert callable(func)
+class TestOperationRegistration:
+    
+    ARITHMETIC_COMMANDS = [
+        "add", "subtract", "multiply", "divide", "power", "root", 
+        "modulus", "int_divide", "percent", "abs_diff"
+    ]
 
-    def test_get_operation_invalid(self) -> None:
-        with pytest.raises(InvalidOperationError):
-            get_operation("unknown")
-
-    def test_get_supported_operations(self) -> None:
-        ops = get_supported_operations()
-        expected_ops = {"add", "subtract", "multiply", "divide", "power", "root", "modulus", "int_divide", "percent", "abs_diff"}
-        assert set(ops) == expected_ops
+    @pytest.mark.parametrize("command_name", ARITHMETIC_COMMANDS)
+    def test_arithmetic_commands_are_registered(self, command_name: str):
+        """Verify that all arithmetic operations are registered as commands."""
+        command = command_manager.get_command(command_name)
+        assert command is not None, f"Command '{command_name}' should be registered."
+        assert callable(command.handler), f"Handler for '{command_name}' should be callable."

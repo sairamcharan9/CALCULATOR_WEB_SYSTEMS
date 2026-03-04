@@ -71,9 +71,6 @@ def configure_logging(
     file_handler.setLevel(level)
     file_handler.setFormatter(formatter)
     root_logger.addHandler(file_handler)
-
-
-
     _is_configured = True
 
 

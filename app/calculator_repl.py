@@ -19,15 +19,14 @@ from __future__ import annotations
 import logging
 
 from decimal import Decimal, InvalidOperation
-
+from app.calculation import Calculation, CalculationFactory
 import colorama
 from colorama import Fore
 
 colorama.init(autoreset=True)
-
-from app.calculation import CalculationFactory
 from app.calculator_config import CalculatorConfig
 from app.calculator_memento import MementoCaretaker
+from app.command_loader import command_manager
 from app.exceptions import (
     CalculationError,
     ConfigurationError,
@@ -55,9 +54,6 @@ class Calculator:
         history (CalculationHistory): The manager for the calculation history.
         caretaker (MementoCaretaker): The manager for the undo/redo mementos.
     """
-
-    SPECIAL_COMMANDS = ("help", "?", "history", "clear", "exit", "greet",
-                        "undo", "redo", "save", "load",)
 
     def __init__(self, env_path: str | None = None) -> None:
         """
@@ -152,29 +148,44 @@ class Calculator:
         command = parts[0]
         self._log.debug("Processing user input: command='%s', parts=%s", command, parts)
 
-        # Route to the appropriate handler based on the command.
-        if command in ("help", "?"): return self._handle_help()
-        if command == "history": return self._handle_history()
-        if command == "clear": return self._handle_clear()
-        if command == "undo": return self._handle_undo()
-        if command == "redo": return self._handle_redo()
-        if command == "save": return self._handle_save()
-        if command == "load": return self._handle_load()
-        if command == "greet": return self._handle_greet()
+        # Look up the command in the CommandManager
+        command_obj = command_manager.get_command(command)
 
-        # LBYL: Validate the format for an arithmetic operation.
+        if command_obj:
+            # If it's a registered command, execute its handler
+            try:
+                # Check if the command is an arithmetic command
+                if "<" in command_obj.usage:
+                    return self._handle_arithmetic_command(command_obj, parts)
+                else:
+                    # Pass 'self' (the calculator instance) to the command handler
+                    return command_obj.handler(self, *parts[1:])
+            except Exception as e:
+                # Handle potential errors within the command handler
+                self._log.error("Error executing command '%s': %s", command, e)
+                print(f"Error: {e}")
+                return str(e)
+
         validation_error = validate_input_parts(parts, self.config.max_input_value)
         if validation_error:
             self._log.warning("Invalid input: %s (raw: '%s')", validation_error, user_input)
             print(f"{Fore.RED}{validation_error}")
             return validation_error
 
+    def _handle_arithmetic_command(self, command_obj, parts):
+        """Handles the execution of arithmetic commands."""
+        if len(parts) != 3:
+            msg = f"Error: Invalid number of arguments for {parts[0]}. Usage: {command_obj.usage}"
+            print(f"{Fore.RED}{msg}")
+            return msg
+
         operation_name, raw_a, raw_b = parts[0], parts[1], parts[2]
 
         # EAFP: Try to perform the calculation, catching potential errors.
         try:
             operand_a, operand_b = Decimal(raw_a), Decimal(raw_b)
-            calc = CalculationFactory.create(operand_a, operand_b, operation_name, self.config.precision)
+            # The command handler for arithmetic operations is the operation function itself
+            calc = Calculation(operand_a, operand_b, command_obj.handler, operation_name, self.config.precision)
         except InvalidOperation:
             msg = f"Error: Invalid number input. '{raw_a}' or '{raw_b}' is not a valid number."
             self._log.warning("Invalid number input: a='%s', b='%s'", raw_a, raw_b)
@@ -193,104 +204,6 @@ class Calculator:
         self._log.info("Calculation successful: %s -> %s", calc, calc.result)
         print(f"{Fore.GREEN}{result_msg}")
         return result_msg
-
-    def _handle_help(self) -> str:
-        """Displays a detailed help message with available operations and commands."""
-        operations = ", ".join(CalculationFactory.get_supported_operations())
-        help_text = (
-            "=== Calculator Help ===\n\n"
-            "Usage: <operation> <number1> <number2>\n\n"
-            f"Available Operations: {operations}\n\n"
-            "Examples:\n"
-            "  add 10 5       -> 15.00\n"
-            "  power 2 8      -> 256.00\n\n"
-            "Special Commands:\n"
-            "  help, ?    - Show this help message\n"
-            "  history    - Show calculation history\n"
-            "  clear      - Clear the history\n"
-            "  undo/redo  - Undo or redo the last action\n"
-            "  save/load  - Manually save or load history\n"
-            "  exit       - Exit the application"
-        )
-        print(f"{Fore.CYAN}{help_text}")
-        return help_text
-
-    def _handle_history(self) -> str:
-        """Displays the formatted calculation history."""
-        rows = self.history.get_all()
-        if not rows:
-            msg = "No calculations in history."
-            print(f"{Fore.YELLOW}{msg}")
-            return msg
-
-        lines = ["=== Calculation History ==="]
-        for i, row in enumerate(rows, start=1):
-            lines.append(f"  {i}. {row['operand_a']} {row['operation']} {row['operand_b']} = {row['result']}")
-        lines.append(f"\nTotal: {len(rows)} calculation(s)")
-        history_text = "\n".join(lines)
-        print(f"{Fore.BLUE}{history_text}")
-        return history_text
-
-    def _handle_clear(self) -> str:
-        """Clears the calculation history, with undo support."""
-        if len(self.history) == 0:
-            msg = "History is already empty."
-            print(f"{Fore.YELLOW}{msg}")
-            return msg
-        
-        self.caretaker.save()
-        self.history.clear()
-        msg = "History cleared."
-        self._log.info("History cleared.")
-        print(f"{Fore.GREEN}{msg}")
-        return msg
-
-    def _handle_undo(self) -> str:
-        """Undoes the last action by restoring the previous history state."""
-        if self.caretaker.undo():
-            msg = f"Undo successful. History now contains {len(self.history)} calculation(s)."
-            self._log.info("Undo successful. History size: %d", len(self.history))
-            print(f"{Fore.GREEN}{msg}")
-        else:
-            msg = "Nothing to undo."
-            self._log.info("Undo requested, but undo stack is empty.")
-            print(f"{Fore.YELLOW}{msg}")
-        return msg
-
-    def _handle_redo(self) -> str:
-        """Redoes the last undone action by restoring the next history state."""
-        if self.caretaker.redo():
-            msg = f"Redo successful. History now contains {len(self.history)} calculation(s)."
-            self._log.info("Redo successful. History size: %d", len(self.history))
-            print(f"{Fore.GREEN}{msg}")
-        else:
-            msg = "Nothing to redo."
-            self._log.info("Redo requested, but redo stack is empty.")
-            print(f"{Fore.YELLOW}{msg}")
-        return msg
-
-    def _handle_save(self) -> str:
-        """Manually saves the current calculation history to a CSV file."""
-        path = self.history.save_to_csv()
-        msg = f"History saved to '{path}'."
-        self._log.info("History manually saved to %s (%d rows)", path, len(self.history))
-        print(f"{Fore.GREEN}{msg}")
-        return msg
-
-    def _handle_load(self) -> str:
-        """Manually loads calculation history from a CSV file."""
-        count = self.history.load_from_csv()
-        msg = f"Loaded {count} calculation(s) from '{self.history.csv_path}'."
-        self._log.info("History loaded from %s, containing %d rows", self.history.csv_path, count)
-        print(f"{Fore.GREEN}{msg}")
-        return msg
-
-    def _handle_greet(self) -> str:
-        """Displays a simple greeting message."""
-        msg = "Hello! Welcome to the calculator."
-        self._log.info("Displayed greeting message.")
-        print(f"{Fore.MAGENTA}{msg}")
-        return msg
 
     @staticmethod
     def _print_welcome() -> None:  # pragma: no cover
