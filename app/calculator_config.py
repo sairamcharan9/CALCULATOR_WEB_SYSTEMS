@@ -41,11 +41,18 @@ class CalculatorConfig:
         default_encoding: Default encoding for file operations.
     """
 
+    # Supported encodings for validation
+    _VALID_ENCODINGS = ("utf-8", "utf-16", "utf-32", "ascii", "latin-1", "iso-8859-1")
+    _MAX_PRECISION = 20
+
     def __init__(self, env_path: str | None = None) -> None:
-        """Load config from environment / ``.env`` file.
+        """Load and validate config from environment / ``.env`` file.
 
         Args:
             env_path: Optional explicit path to a ``.env`` file.
+
+        Raises:
+            ConfigurationError: If any setting is invalid.
         """
         load_dotenv(dotenv_path=env_path, override=True)
 
@@ -67,6 +74,37 @@ class CalculatorConfig:
         )
         self.default_encoding: str = os.getenv("CALCULATOR_DEFAULT_ENCODING", "utf-8")
 
+        # Validate all settings on startup
+        self.validate()
+
+    def validate(self) -> None:
+        """Validate all configuration settings.
+
+        Raises:
+            ConfigurationError: If any setting fails validation.
+        """
+        if not self.log_dir.strip():
+            raise ConfigurationError("CALCULATOR_LOG_DIR must not be empty.")
+        if not self.log_file.strip():
+            raise ConfigurationError("CALCULATOR_LOG_FILE must not be empty.")
+        if not self.history_dir.strip():
+            raise ConfigurationError("CALCULATOR_HISTORY_DIR must not be empty.")
+        if not self.history_file.strip():
+            raise ConfigurationError("CALCULATOR_HISTORY_FILE must not be empty.")
+        if self.precision > self._MAX_PRECISION:
+            raise ConfigurationError(
+                f"CALCULATOR_PRECISION must be <= {self._MAX_PRECISION}, got {self.precision}."
+            )
+        if self.max_input_value <= 0:
+            raise ConfigurationError(
+                f"CALCULATOR_MAX_INPUT_VALUE must be positive, got {self.max_input_value}."
+            )
+        if self.default_encoding.lower() not in self._VALID_ENCODINGS:
+            raise ConfigurationError(
+                f"CALCULATOR_DEFAULT_ENCODING '{self.default_encoding}' is not supported. "
+                f"Use one of: {', '.join(self._VALID_ENCODINGS)}."
+            )
+
     # -- helpers ------------------------------------------------------------
 
     @staticmethod
@@ -81,7 +119,7 @@ class CalculatorConfig:
             return True
         if lower in ("false", "0", "no"):
             return False
-        raise ConfigurationError(  # pragma: no cover
+        raise ConfigurationError(
             f"Invalid boolean value for {name}: '{value}'. "
             "Use 'true' or 'false'."
         )
@@ -96,11 +134,11 @@ class CalculatorConfig:
         try:
             result = int(value)
         except ValueError:
-            raise ConfigurationError(  # pragma: no cover
+            raise ConfigurationError(
                 f"Invalid integer value for {name}: '{value}'."
             )
         if result <= 0:
-            raise ConfigurationError(  # pragma: no cover
+            raise ConfigurationError(
                 f"{name} must be a positive integer, got {result}."
             )
         return result
@@ -138,11 +176,13 @@ class CalculatorConfig:
                 f"Invalid float value for {name}: '{value}'."
             )
 
-    def __repr__(self) -> str:  # pragma: no cover
+    def __repr__(self) -> str:
         return (
-            f"CalculatorConfig(log_dir='{self.log_dir}', "
+            f"CalculatorConfig("
+            f"log_dir='{self.log_dir}', "
             f"log_file='{self.log_file}', "
             f"history_dir='{self.history_dir}', "
+            f"history_file='{self.history_file}', "
             f"max_history_size={self.max_history_size}, "
             f"auto_save={self.auto_save}, "
             f"precision={self.precision}, "
