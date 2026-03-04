@@ -20,6 +20,7 @@ handle the `ZeroDivisionError` that `Decimal` would raise.
 from decimal import Decimal, InvalidOperation as DecimalInvalidOperation
 
 from app.commands import command
+from app.logger import get_logger
 from app.exceptions import DivisionByZeroError, InvalidOperationError
 
 # --- Arithmetic Functions (Strategies) ---
@@ -39,7 +40,8 @@ def multiply(a: Decimal, b: Decimal) -> Decimal:
 @command("divide", "Returns the quotient of two Decimal numbers.", "divide <n1> <n2>")
 def divide(a: Decimal, b: Decimal) -> Decimal:
     """
-    Raises `DivisionByZeroError` if the divisor is zero.
+    Returns `None` if the divisor is zero, and logs a warning.
+    Otherwise, returns the quotient of two Decimal numbers.
     """
     if b == Decimal(0):
         raise DivisionByZeroError("Cannot divide by zero.")

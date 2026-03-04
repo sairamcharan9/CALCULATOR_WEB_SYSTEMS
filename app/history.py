@@ -23,7 +23,7 @@ import logging
 import os
 from abc import ABC, abstractmethod
 from datetime import datetime
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 import pandas as pd
 
 from app.calculation import Calculation
@@ -74,7 +74,9 @@ class AutoSaveObserver(CalculationObserver):
     """
 
     def __init__(self, history: "CalculationHistory", enabled: bool = True) -> None:
-        """Initializes the observer with a reference to the history and its enabled state."""
+        """
+        Initializes the observer with a reference to the history and its enabled state.
+        """
         self._history = history
         self.enabled = enabled
 
@@ -162,13 +164,22 @@ class CalculationHistory:
         return self._df.to_dict(orient="records")
 
     def get_calculations(self) -> list[Calculation]:
-        """Reconstructs and returns the history as a list of `Calculation` objects."""
+        """
+        Reconstructs and returns the history as a list of `Calculation` objects.
+        Each calculation object will have its `result` property set if it was
+        available in the history.
+        """
         calculations = []
         for index, row in self._df.iterrows():
             try:
-                calculations.append(self._dict_to_calculation(row.to_dict()))
+                calc = self._dict_to_calculation(row.to_dict())
+                # Execute the calculation to ensure the result is computed, especially for old entries
+                # where result might have been stored as None or empty string.
+                if calc.result is None:
+                    calc.execute() # Ensure result is set after loading
+                calculations.append(calc)
             except Exception as e:
-                logging.warning("Skipping malformed history row #%d: %s | Error: %s", index, row.to_dict(), e)
+                logging.warning("Skipping malformed history row #%d during load: %s | Error: %s", index, row.to_dict(), e)
         return calculations
 
     def get_dataframe(self) -> pd.DataFrame:
@@ -192,14 +203,20 @@ class CalculationHistory:
         return f"CalculationHistory({len(self._df)} calculations)"
 
     def save_to_csv(self, path: str | None = None) -> str:
-        """Saves the history to a CSV file."""
+        """
+        Saves the history to a CSV file.
+        """
         target_path = path or self.csv_path
         os.makedirs(os.path.dirname(target_path), exist_ok=True)
         self._df.to_csv(target_path, index=False, encoding=self.encoding)
         return target_path
 
     def load_from_csv(self, path: str | None = None) -> int:
-        """Loads history from a CSV, replacing current data."""
+        """
+        Loads history from a CSV, replacing current data. If a loaded calculation
+        does not have a result (e.g., from an older history file), its execute()
+        method will be called to compute it.
+        """
         target_path = path or self.csv_path
         if not os.path.exists(target_path):
             return 0
@@ -209,6 +226,21 @@ class CalculationHistory:
             self._df = self._df.reindex(columns=self._COLUMNS, fill_value="")
             if len(self._df) > self.max_size:
                 self._df = self._df.tail(self.max_size).reset_index(drop=True)
+
+            # Reconstruct and execute calculations to ensure results are set
+            # This creates new Calculation objects, so we need to replace the dataframe.
+            loaded_calculations = []
+            for index, row in self._df.iterrows():
+                try:
+                    calc = self._dict_to_calculation(row.to_dict())
+                    if calc.result is None:
+                        calc.execute() # Ensure result is set after loading
+                    loaded_calculations.append(calc)
+                except Exception as e:
+                    logging.warning("Skipping malformed history row #%d during load: %s | Error: %s", index, row.to_dict(), e)
+            
+            self._df = pd.DataFrame([self._calculation_to_dict(c) for c in loaded_calculations], columns=self._COLUMNS)
+
             return len(self._df)
         except Exception:
             # In case of a corrupted file, start with an empty history
@@ -216,29 +248,55 @@ class CalculationHistory:
             return 0
 
     def _calculation_to_dict(self, calc: Calculation) -> dict:
-        """Converts a Calculation object to a dictionary for DataFrame storage."""
+        """
+        Converts a Calculation object to a dictionary for DataFrame storage.
+        Stores the result as a string, including "" if it hasn't been executed.
+        """
         return {
             "timestamp": calc.timestamp.strftime("%Y-%m-%d %H:%M:%S"),
             "operand_a": str(calc.operand_a),
             "operand_b": str(calc.operand_b),
             "operation": calc.operation_name,
-            "result": str(calc.result),
+            "result": str(calc.result) if calc.result is not None else "", # Store "" if not executed
         }
 
     def _dict_to_calculation(self, row: dict) -> Calculation:
-        """Converts a dictionary (from a DataFrame row) back to a Calculation object."""
-        command_name = row["operation"]
+        """
+        Converts a dictionary (from a DataFrame row) back to a Calculation object.
+        The result is set if available in the row, otherwise it remains None.
+        """
+        command_name = row.get("operation")
+        if not command_name:
+            raise ValueError("Missing operation name in history row.")
+
         command = command_manager.get_command(command_name)
         if not command:
             raise ValueError(f"Unknown operation '{command_name}' in history.")
 
-        calc = Calculation(
-            Decimal(row["operand_a"]),
-            Decimal(row["operand_b"]),
-            command.handler,
-            command_name,
-        )
-        # Manually set the stored result and timestamp
-        calc.result = Decimal(row["result"])
-        calc.timestamp = datetime.strptime(row["timestamp"], "%Y-%m-%d %H:%M:%S")
+        operand_a_str = row.get("operand_a", "")
+        operand_b_str = row.get("operand_b", "")
+
+        try:
+            operand_a = Decimal(operand_a_str) if operand_a_str else Decimal(0) # Default to 0 if missing/empty
+            operand_b = Decimal(operand_b_str) if operand_b_str else Decimal(0) # Default to 0 if missing/empty
+        except InvalidOperation as e:
+            raise ValueError(f"Invalid numeric operand in history row: {e}") from e
+
+        calc = Calculation(operand_a, operand_b, command.handler, command_name,)
+        
+        result_str = row.get("result")
+        if result_str and result_str != "None":
+            try:
+                calc.result = Decimal(result_str)
+            except InvalidOperation as e:
+                logging.warning(f"Invalid result format in history for row: {row}. Error: {e}")
+                # calc.result remains None, will be re-executed if needed.
+
+        timestamp_str = row.get("timestamp", datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+        try:
+            calc.timestamp = datetime.strptime(timestamp_str, "%Y-%m-%d %H:%M:%S")
+        except ValueError as e:
+            logging.warning(f"Invalid timestamp format in history for row: {row}. Using current time. Error: {e}")
+            calc.timestamp = datetime.now() # Fallback to current time
+
         return calc
