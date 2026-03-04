@@ -20,11 +20,12 @@ import os
 from abc import ABC, abstractmethod
 from datetime import datetime
 
+from decimal import Decimal
 import pandas as pd
 
-from app.calculation import Calculation
+from app.calculation import Calculation, CalculationFactory
 from app.logger import get_logger
-
+from app.operations import get_operation
 
 # ---------------------------------------------------------------------------
 # Observer base and concrete observers
@@ -170,6 +171,27 @@ class CalculationHistory:
         """Return all history rows as a list of dicts."""
         return self._df.to_dict(orient="records")
 
+    def get_calculations(self) -> list[Calculation]:
+        """Return all history rows as a list of Calculation instances."""
+        calculations = []
+        for index, row in self._df.iterrows():
+            try:
+                # Recreate Calculation instances from the DataFrame
+                operation = get_operation(row["operation"])
+                calc = Calculation( # This will re-calculate, but we overwrite below
+                    operand_a=Decimal(row["operand_a"]),
+                    operand_b=Decimal(row["operand_b"]),
+                    operation_name=row["operation"],
+                    operation=operation
+                )
+                # Overwrite with stored values
+                calc.result = Decimal(row["result"])
+                calc.timestamp = datetime.strptime(row["timestamp"], "%Y-%m-%d %H:%M:%S")
+                calculations.append(calc)
+            except Exception as e:
+                logging.warning("Skipping malformed history row #%d: %s | Error: %s", index, row.to_dict(), e)
+        return calculations
+
     def get_dataframe(self) -> pd.DataFrame:
         """Return a copy of the history ``DataFrame``."""
         return self._df.copy()
@@ -219,7 +241,12 @@ class CalculationHistory:
         target = path or self.csv_path
         if os.path.exists(target):
             try:
-                self._df = pd.read_csv(target, encoding=self.encoding).fillna("")
+                self._df = pd.read_csv(
+                    target,
+                    encoding=self.encoding,
+                    dtype=str  # Treat all columns as strings to preserve Decimal precision
+                ).fillna("")
+
                 # Ensure expected columns exist
                 for col in self._COLUMNS:
                     if col not in self._df.columns:

@@ -83,6 +83,14 @@ class TestCalculationHistoryBasics:
         """Repr shows count."""
         assert "0 calculations" in repr(history)
 
+    def test_get_calculations(self, history: CalculationHistory, sample_calc: Calculation) -> None:
+        """get_calculations returns Calculation instances."""
+        history.add(sample_calc)
+        calcs = history.get_calculations()
+        assert len(calcs) == 1
+        assert isinstance(calcs[0], Calculation)
+        assert calcs[0].result == sample_calc.result
+
 
 # ---------------------------------------------------------------------------
 # Observer pattern
