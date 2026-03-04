@@ -31,13 +31,13 @@ def reset_logger():
     for h in root.handlers[:]:
         h.close()
         root.removeHandler(h)
-    logger_module._configured = False
+    logger_module._is_configured = False
     yield
     # Teardown again after test
     for h in root.handlers[:]:
         h.close()
         root.removeHandler(h)
-    logger_module._configured = False
+    logger_module._is_configured = False
 
 
 @pytest.fixture
@@ -158,8 +158,7 @@ class TestLoggingObserverIntegration:
 
         log_path = os.path.join(log_dir, log_file)
         content = open(log_path, encoding="utf-8").read()
-        assert "multiply" in content
-        assert "20.00" in content
+        assert "4 * 5 = 20.00" in content
 
     def test_observer_uses_info_level(self, tmp_path, sample_calc) -> None:
         """LoggingObserver messages are emitted at INFO level."""
@@ -209,7 +208,7 @@ class TestREPLLogging:
         calculator.process_input("add 3 4")
         content = self._read_log(tmp_path)
         assert "INFO" in content
-        assert "add" in content
+        assert "3 + 4 = 7.00" in content
 
     def test_failed_calculation_logged_error(self, calculator, tmp_path) -> None:
         """Division by zero produces an ERROR log entry."""
