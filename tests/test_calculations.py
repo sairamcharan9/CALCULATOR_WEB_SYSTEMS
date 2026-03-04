@@ -11,7 +11,7 @@ from decimal import Decimal
 
 from app import load_plugins
 # Import the operation functions directly for testing Calculation results
-from app.operations import add, subtract, multiply, divide, nth_power, nth_root, modulus, int_divide, percent, abs_diff 
+from app.operations import add, subtract, multiply, divide, power, nth_root, modulus, int_divide, percent, abs_diff 
 from app.calculation import Calculation, CalculationFactory
 from app.exceptions import DivisionByZeroError, InvalidOperationError
 
@@ -33,7 +33,7 @@ class TestCalculation:
             (Decimal("10"), Decimal("4"), subtract, "subtract", Decimal("6.00")),
             (Decimal("6"), Decimal("7"), multiply, "multiply", Decimal("42.00")),
             (Decimal("20"), Decimal("4"), divide, "divide", Decimal("5.00")),
-            (Decimal("2"), Decimal("8"), nth_power, "power", Decimal("256.00")),
+            (Decimal("2"), Decimal("8"), power, "power", Decimal("256.00")),
             (Decimal("9"), Decimal("2"), nth_root, "root", Decimal("3.00")),
             (Decimal("10"), Decimal("3"), modulus, "modulus", Decimal("1.00")),
             (Decimal("10"), Decimal("3"), int_divide, "int_divide", Decimal("3.00")),

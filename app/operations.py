@@ -18,9 +18,25 @@ handle the `ZeroDivisionError` that `Decimal` would raise.
 """
 
 from decimal import Decimal, InvalidOperation as DecimalInvalidOperation
+from enum import Enum
 
 from app.commands import command
 from app.exceptions import DivisionByZeroError, InvalidOperationError
+
+# An enumeration of supported arithmetic operations. This is used to clearly define
+# the set of operations that the calculator can perform and to associate them with
+# their respective functions.
+class Operations(Enum):
+    ADD = "add"
+    SUBTRACT = "subtract"
+    MULTIPLY = "multiply"
+    DIVIDE = "divide"
+    POWER = "power"
+    ROOT = "root"
+    MODULUS = "modulus"
+    INT_DIVIDE = "int_divide"
+    PERCENT = "percent"
+    ABS_DIFF = "abs_diff"
 
 # --- Arithmetic Functions (Strategies) ---
 
@@ -49,8 +65,7 @@ def divide(a: Decimal, b: Decimal) -> Decimal:
         # Catch other potential decimal errors, e.g., invalid contexts
         raise InvalidOperationError(f"Invalid division operation: {e}")
 
-@command("power", "Returns the base `a` raised to the power of `b`.", "power <base> <exp>")
-def nth_power(a: Decimal, b: Decimal) -> Decimal:
+def power(a: Decimal, b: Decimal) -> Decimal:
     return a ** b
 
 @command("root", "Calculates the `b`-th root of `a`.", "root <num> <n>")
