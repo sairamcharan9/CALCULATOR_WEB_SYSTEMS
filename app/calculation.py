@@ -1,27 +1,13 @@
-"""
-Calculation and Factory Module
-==============================
-
-This module defines the `Calculation` class, which represents a single
-arithmetic operation, and the `CalculationFactory`, which creates instances
-of `Calculation`. This design uses the Factory Method pattern to decouple the
-creation of calculations from their representation.
-
-Classes:
-    - Calculation: Represents a single arithmetic calculation, including operands,
-      operation, result, and timestamp.
-    - CalculationFactory: A factory for creating `Calculation` objects.
-"""
-
 from decimal import Decimal, ROUND_HALF_UP
 from typing import Callable, Optional
 from datetime import datetime
 
+from app.interfaces import Command  # Import Command
 from app.command_loader import command_manager
-from app.exceptions import InvalidOperationError
+from app.exceptions import InvalidOperationError, DivisionByZeroError
 
 
-class Calculation:
+class Calculation(Command):  # Inherit from Command
     """
     Represents a single, immutable arithmetic calculation.
 
@@ -58,7 +44,7 @@ class Calculation:
         precision: int = 2
     ) -> None:
         """
-        Initializes a new Calculation instance and computes the result.
+        Initializes a new Calculation instance. The result is computed when execute() is called.
 
         Args:
             operand_a (Decimal): The first operand.
@@ -66,28 +52,30 @@ class Calculation:
             operation (Callable): The function to execute for the calculation.
             operation_name (str): The name of the operation.
             precision (int): The number of decimal places for rounding the result.
-
-        Raises:
-            ZeroDivisionError: If the operation attempts a division by zero.
-            ValueError: If the operation is mathematically invalid (e.g., root of a negative).
         """
         self.operand_a = operand_a
         self.operand_b = operand_b
         self.operation = operation
         self.operation_name = operation_name
+        self.precision = precision
         self.timestamp = datetime.now()
+        self.result: Optional[Decimal] = None  # Result will be set by execute
 
-        # Execute the operation to get the raw result
-        raw_result = operation(operand_a, operand_b)
-
-        # Round the result to the specified precision using ROUND_HALF_UP
-        if precision >= 0:
-            # Create a Decimal object for the rounding format (e.g., '0.00' for precision 2)
-            rounding_format = f"0.{'0' * precision}" if precision > 0 else "0"
-            self.result = raw_result.quantize(Decimal(rounding_format), rounding=ROUND_HALF_UP)
-        else:  # pragma: no cover
-            # If precision is negative, do not round
-            self.result = raw_result
+    def execute(self) -> Decimal:
+        """
+        Executes the encapsulated arithmetic operation and returns the result.
+        """
+        try:
+            raw_result = self.operation(self.operand_a, self.operand_b)
+            if self.precision >= 0:
+                rounding_format = f"0.{'0' * self.precision}" if self.precision > 0 else "0"
+                self.result = raw_result.quantize(Decimal(rounding_format), rounding=ROUND_HALF_UP)
+            else:  # pragma: no cover
+                self.result = raw_result
+        except DivisionByZeroError:
+            self.result = Decimal('NaN')
+            raise # Re-raise the exception to be caught by the test
+        return self.result
 
     def __repr__(self) -> str:
         """

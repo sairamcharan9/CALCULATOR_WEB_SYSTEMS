@@ -12,6 +12,7 @@ from unittest.mock import MagicMock, patch
 from decimal import Decimal
 import pandas as pd
 
+from app.operations import add, subtract
 from app import load_plugins
 from app.calculation import Calculation
 from app.history import (
@@ -31,22 +32,30 @@ def dummy_op(a, b): return a + b
 
 @pytest.fixture
 def history(tmp_path):
-    """Provides a fresh CalculationHistory instance for each test."""
+    """
+    Provides a fresh CalculationHistory instance for each test.
+    """
     return CalculationHistory(
         history_dir=str(tmp_path), history_file="test_hist.csv"
     )
 
 @pytest.fixture
 def sample_calc():
-    """Provides a sample Calculation object for testing."""
-    return Calculation(Decimal("2"), Decimal("3"), dummy_op, "add")
+    """
+    Provides a sample Calculation object for testing.
+    """
+    calc = Calculation(Decimal("2"), Decimal("3"), dummy_op, "add")
+    calc.execute()
+    return calc
 
 # ===========================================================================
 # Test Cases
 # ===========================================================================
 
 class TestCalculationHistoryBasics:
-    """Tests for core history management functions."""
+    """
+    Tests for core history management functions.
+    """
 
     def test_empty_history(self, history: CalculationHistory):
         """History should be empty on initialization."""
@@ -85,7 +94,9 @@ class TestCalculationHistoryBasics:
         assert calcs[0].result == sample_calc.result
 
 class TestObserverPattern:
-    """Tests for the observer notification mechanism."""
+    """
+    Tests for the observer notification mechanism.
+    """
 
     def test_add_and_notify_observer(self, history: CalculationHistory, sample_calc: Calculation):
         """Test that an observer is notified when a calculation is added."""
@@ -100,11 +111,15 @@ class TestObserverPattern:
         observer.on_calculation.assert_called_once_with(sample_calc)
 
 class TestLoggingObserver:
-    """Tests for the logging observer."""
+    """
+    Tests for the logging observer.
+    """
 
     @patch("app.history.get_logger")
     def test_logs_calculation(self, mock_get_logger, sample_calc: Calculation):
-        """Test that the LoggingObserver logs the calculation."""
+        """
+        Test that the LoggingObserver logs the calculation.
+        """
         # Mock the logger that the observer will use
         mock_logger = MagicMock()
         mock_get_logger.return_value = mock_logger
@@ -120,10 +135,14 @@ class TestLoggingObserver:
         assert args[1] == sample_calc
 
 class TestCSVPersistence:
-    """Tests for saving to and loading from CSV files."""
+    """
+    Tests for saving to and loading from CSV files.
+    """
 
     def test_save_and_load(self, history: CalculationHistory, sample_calc: Calculation):
-        """Test saving the history to a CSV and loading it back."""
+        """
+        Test saving the history to a CSV and loading it back.
+        """
         history.add(sample_calc)
         
         # Save to CSV
@@ -163,7 +182,9 @@ class TestCSVPersistence:
         assert custom_path.exists()
 
     def test_load_from_csv_exception_returns_zero(self, history, tmp_path):
-        """If pd.read_csv fails, load_from_csv should return 0 and clear history."""
+        """
+        If pd.read_csv fails, load_from_csv should return 0 and clear history.
+        """
         path = tmp_path / "corrupted.csv"
         path.write_text("this is not a valid csv")
         
@@ -174,13 +195,15 @@ class TestCSVPersistence:
     def test_add_trims_to_max_size(self):
         """History should not grow beyond max_size."""
         history = CalculationHistory(max_size=2)
-        history.add(Calculation(Decimal(1), Decimal(1), dummy_op, "add"))
-        history.add(Calculation(Decimal(2), Decimal(2), dummy_op, "add"))
-        history.add(Calculation(Decimal(3), Decimal(3), dummy_op, "add")) # This should push the first one out
+
+        calc1 = Calculation(Decimal(1), Decimal(1), dummy_op, "add"); calc1.execute(); history.add(calc1)
+        calc2 = Calculation(Decimal(2), Decimal(2), dummy_op, "add"); calc2.execute(); history.add(calc2)
+        calc3 = Calculation(Decimal(3), Decimal(3), dummy_op, "add"); calc3.execute(); history.add(calc3) # This should push the first one out
         
         assert len(history) == 2
         records = history.get_all()
         assert records[0]['operand_a'] == '2' # The first one should be gone
+        assert records[0]['result'] == '4.00'
 
     def test_load_from_csv_trims_to_max_size(self, tmp_path):
         """Loading a CSV larger than max_size should trim it."""
@@ -194,6 +217,9 @@ class TestCSVPersistence:
         
         history = CalculationHistory(history_dir=str(tmp_path), history_file="large.csv", max_size=2)
         count = history.load_from_csv()
+
+        # The internal logic of load_from_csv now ensures results are set during loading
+        # No need for explicit calc.execute() here.
         
         assert count == 2
         assert len(history) == 2
@@ -206,13 +232,16 @@ class TestCSVPersistence:
         
         history = CalculationHistory(history_dir=str(tmp_path), history_file="missing_cols.csv")
         history.load_from_csv()
+
+        # The internal logic of load_from_csv now ensures results are set during loading
+        # No need for explicit calc.execute() here.
         
         record = history.get_all()[0]
-        assert record['operand_b'] == ""
-        assert record['result'] == ""
+        assert record['operand_b'] == "0"
+        assert record['result'] == "1.00" # Expect computed result after re-execution
 
 class TestObserverRemoval:
-    def test_remove_observer_stops_notifications(self, history, sample_calc):
+    def test_remove_observer_stops_notifications(self, history: CalculationHistory, sample_calc: Calculation):
         """An observer should not be notified after it has been removed."""
         observer = MagicMock()
         history.add_observer(observer)
@@ -227,13 +256,16 @@ class TestGetCalculations:
 
     def test_get_calculations_multiple(self, history):
         """Test reconstructing multiple Calculation objects."""
-        history.add(Calculation(Decimal("2"), Decimal("3"), dummy_op, "add"))
-        history.add(Calculation(Decimal("10"), Decimal("4"), dummy_op, "subtract"))
-        
+
+        calc1 = Calculation(Decimal("2"), Decimal("3"), add, "add"); calc1.execute(); history.add(calc1)
+        calc2 = Calculation(Decimal("10"), Decimal("4"), subtract, "subtract"); calc2.execute(); history.add(calc2)
+
         calcs = history.get_calculations()
         assert len(calcs) == 2
         assert calcs[0].operation_name == "add"
         assert calcs[1].operation_name == "subtract"
+        assert calcs[0].result == Decimal("5.00")
+        assert calcs[1].result == Decimal("6.00") # 10 - 4 = 6
 
     def test_get_calculations_malformed_row_skipped(self, history, caplog):
         """A row that can't be converted to a Calculation should be skipped."""

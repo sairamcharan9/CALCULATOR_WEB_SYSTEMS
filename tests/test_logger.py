@@ -188,6 +188,7 @@ class TestLoggingObserverIntegration:
         history.add_observer(observer)
         
         calc = Calculation(Decimal("10"), Decimal("5"), dummy_op, "add")
+        calc.execute() # Execute the calculation to set the result
         history.add(calc)
         
         # Verify that the log file contains the output
@@ -221,7 +222,7 @@ class TestREPLLogging:
         log_file = tmp_path / "logs" / "repl_test.log"
         content = log_file.read_text()
         assert "ERROR" in content
-        assert "Calculation error" in content
+        assert "Calculation error for divide(5, 0): Cannot divide by zero." in content
         assert "Cannot divide by zero" in content
 
     def test_invalid_input_logged_warning(self, calculator_for_logging, tmp_path):
