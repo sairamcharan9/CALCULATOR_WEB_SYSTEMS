@@ -15,9 +15,15 @@ Experience our intuitive, color-coded REPL interface in action. The application 
 
 <div align="center">
   <img src="screenshots/image%20copy.png" width="48%" />
-  <img src="screenshots/image%20copy%202.png" width="48%" />
   <img src="screenshots/image%20copy%203.png" width="48%" />
-  <img src="screenshots/image%20copy%204.png" width="48%" />
+</div>
+
+<div align="center" style="margin-top: 10px;">
+  <img src="screenshots/image%20copy%202.png" width="98%" />
+</div>
+
+<div align="center" style="margin-top: 10px;">
+  <img src="screenshots/image%20copy%204.png" width="98%" />
 </div>
 
 ---
