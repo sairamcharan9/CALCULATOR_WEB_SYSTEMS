@@ -68,7 +68,7 @@ Create a file named `.env` in the root directory of the project.
 
 ### 2. Configure Environment Variables
 
-Add the following environment variables to the `.env` file and adjust their values as needed:
+Add the following environment variables to the `.env` file and and adjust their values as needed:
 
 ```env
 # Logging Configuration
@@ -186,3 +186,7 @@ The CI workflow is automatically triggered on:
 4.  **Testing**: Executes the unit test suite with `pytest` and enforces a minimum test coverage threshold.
 
 This automated process ensures that all code merged into the `main` branch is well-tested and adheres to the project's quality standards.
+
+## Agent Branch Test
+
+This README was updated via an automated agent branch and PR workflow.
