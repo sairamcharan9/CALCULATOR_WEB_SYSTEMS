@@ -182,7 +182,7 @@ class TestCalculatorREPL:
             h.flush()
             h.close()
             logging.getLogger("calculator").removeHandler(h)
-        logger_module._configured = False
+        logger_module._is_configured = False
 
         calc2 = Calculator(env_path=str(env))
         log_path = tmp_path / "logs" / "autoload.log"
