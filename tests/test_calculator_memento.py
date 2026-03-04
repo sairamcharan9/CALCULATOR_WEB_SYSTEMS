@@ -57,9 +57,9 @@ class TestCalculatorMemento:
         assert len(memento.dataframe) == 1
 
     def test_repr(self) -> None:
-        """Repr shows row count."""
-        memento = CalculatorMemento(pd.DataFrame([{"a": 1}, {"a": 2}]))
-        assert "2 rows" in repr(memento)
+        """The repr string includes the dataset size."""
+        memento = CalculatorMemento(pd.DataFrame({"A": [1, 2]}))
+        assert "rows=2" in repr(memento)
 
 
 # ---------------------------------------------------------------------------

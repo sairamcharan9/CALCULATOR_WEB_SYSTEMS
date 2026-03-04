@@ -235,4 +235,4 @@ class TestREPLLogging:
         calculator.process_input("add 2 2")
         calculator.process_input("save")
         content = self._read_log(tmp_path)
-        assert "History saved" in content
+        assert "History manually saved" in content

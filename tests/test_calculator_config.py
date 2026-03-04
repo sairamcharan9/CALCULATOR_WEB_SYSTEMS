@@ -213,7 +213,7 @@ class TestValidation:
 
     def test_unsupported_encoding_raises(self, tmp_path) -> None:
         env = self._make_env(tmp_path, CALCULATOR_DEFAULT_ENCODING="shift-jis")
-        with pytest.raises(ConfigurationError, match="ENCODING"):
+        with pytest.raises(ConfigurationError, match="encoding"):
             CalculatorConfig(env_path=env)
 
     def test_valid_encodings_accepted(self, tmp_path) -> None:

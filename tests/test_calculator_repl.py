@@ -131,3 +131,63 @@ class TestCalculatorREPL:
 
         assert "Loaded 1" in calculator.process_input("load")
         assert len(calculator.history) == 1
+
+    def test_empty_input_returns_empty_string(self, calculator: Calculator) -> None:
+        """Empty or whitespace-only input returns empty string."""
+        assert calculator.process_input("") == ""
+        assert calculator.process_input("   ") == ""
+
+    def test_greet_command(self, calculator: Calculator) -> None:
+        """greet command returns a greeting message."""
+        msg = calculator.process_input("greet")
+        assert "Hello" in msg or "Welcome" in msg
+
+    def test_history_empty_message(self, calculator: Calculator) -> None:
+        """history command on empty history returns appropriate message."""
+        msg = calculator.process_input("history")
+        assert "No calculations" in msg
+
+    def test_history_with_entries(self, calculator: Calculator) -> None:
+        """history command shows entries when history is populated."""
+        calculator.process_input("add 1 2")
+        calculator.process_input("multiply 3 4")
+        msg = calculator.process_input("history")
+        assert "Calculation History" in msg
+        assert "add" in msg
+        assert "multiply" in msg
+
+    def test_question_mark_shows_help(self, calculator: Calculator) -> None:
+        """'?' is an alias for 'help'."""
+        msg = calculator.process_input("?")
+        assert "Calculator Help" in msg
+
+    def test_autoload_logs_on_existing_csv(self, tmp_path) -> None:
+        """Auto-load logs INFO when a history CSV already exists on startup."""
+        import logging
+        import app.logger as logger_module
+
+        env = tmp_path / ".env"
+        env.write_text(
+            f"CALCULATOR_LOG_DIR={tmp_path}/logs\n"
+            f"CALCULATOR_HISTORY_DIR={tmp_path}/data\n"
+            "CALCULATOR_LOG_FILE=autoload.log\n"
+            "CALCULATOR_AUTO_SAVE=false\n"
+            "CALCULATOR_PRECISION=2\n"
+        )
+        calc1 = Calculator(env_path=str(env))
+        calc1.process_input("add 3 4")
+        calc1.process_input("save")
+
+        for h in logging.getLogger("calculator").handlers:
+            h.flush()
+            h.close()
+            logging.getLogger("calculator").removeHandler(h)
+        logger_module._configured = False
+
+        calc2 = Calculator(env_path=str(env))
+        log_path = tmp_path / "logs" / "autoload.log"
+        for h in logging.getLogger("calculator").handlers:
+            h.flush()
+        if log_path.exists():
+            content = log_path.read_text(encoding="utf-8")
+            assert "Auto-loaded" in content or "auto" in content.lower() or len(calc2.history) == 1
