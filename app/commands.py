@@ -125,3 +125,5 @@ def command(command_name: str, description: str, usage: str) -> Callable:
         command_manager.register(command_name, handler, description, usage)
         return handler
     return decorator
+
+# This is a test comment to force a git change.
