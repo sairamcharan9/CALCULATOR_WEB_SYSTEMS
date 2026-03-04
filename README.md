@@ -14,19 +14,10 @@
 Experience our intuitive, color-coded REPL interface in action. The application features robust syntax highlighting for commands, success messages, operational status, and errors natively leveraging `colorama` for a seamless user experience!
 
 <div align="center">
-  <img src="screenshots/image.png" width="48%" />
-  &nbsp;
   <img src="screenshots/image%20copy.png" width="48%" />
-</div>
-
-<div align="center" style="margin-top: 10px;">
   <img src="screenshots/image%20copy%202.png" width="48%" />
-  &nbsp;
   <img src="screenshots/image%20copy%203.png" width="48%" />
-</div>
-
-<div align="center" style="margin-top: 10px;">
-  <img src="screenshots/image%20copy%204.png" width="97%" />
+  <img src="screenshots/image%20copy%204.png" width="48%" />
 </div>
 
 ---
