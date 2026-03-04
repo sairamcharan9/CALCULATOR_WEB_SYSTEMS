@@ -46,6 +46,7 @@ class TestCalculation:
     ) -> None:
         """Test that Calculation computes the correct result."""
         calc = Calculation(a, b, operation, op_name, precision=2)
+        calc.execute()
         assert calc.result == expected
         assert calc.operand_a == a
         assert calc.operand_b == b
@@ -54,6 +55,7 @@ class TestCalculation:
     def test_repr(self) -> None:
         """Test __repr__ output."""
         calc = Calculation(Decimal("2"), Decimal("3"), add, "add")
+        calc.execute()
         assert "Calculation" in repr(calc)
         assert "add" in repr(calc)
         assert "5.00" in repr(calc)
@@ -69,14 +71,17 @@ class TestCalculation:
         self, a, b, operation, op_name, expected_substring
     ) -> None:
         """Test that __str__ uses the correct format and symbol."""
-        result_str = str(Calculation(a, b, operation, op_name))
+        calc = Calculation(a, b, operation, op_name)
+        calc.execute()
+        result_str = str(calc)
         assert expected_substring in result_str
         assert "=" in result_str
 
     def test_division_by_zero(self) -> None:
         """Creating a divide-by-zero Calculation raises DivisionByZeroError."""
         with pytest.raises(DivisionByZeroError):
-            Calculation(Decimal("10"), Decimal("0"), divide, "divide")
+            calc = Calculation(Decimal("10"), Decimal("0"), divide, "divide")
+            calc.execute()
 
 
 # ===========================================================================
@@ -105,6 +110,7 @@ class TestCalculationFactory:
     def test_create_valid(self, op_name, a, b, expected) -> None:
         """Factory creates correct Calculation instances."""
         calc = CalculationFactory.create(a, b, op_name, precision=2)
+        calc.execute()
         assert calc.result == expected
         assert calc.operation_name == op_name
 

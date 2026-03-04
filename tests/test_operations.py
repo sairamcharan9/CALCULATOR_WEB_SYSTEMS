@@ -8,6 +8,7 @@ percent, abs_diff — including edge cases.
 """
 
 import pytest
+import logging
 from decimal import Decimal
 
 from app import load_plugins

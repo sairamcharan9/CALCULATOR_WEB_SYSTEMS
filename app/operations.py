@@ -20,6 +20,7 @@ handle the `ZeroDivisionError` that `Decimal` would raise.
 from decimal import Decimal, InvalidOperation as DecimalInvalidOperation
 
 from app.commands import command
+from app.logger import get_logger
 from app.exceptions import DivisionByZeroError, InvalidOperationError
 
 # --- Arithmetic Functions (Strategies) ---
@@ -40,7 +41,8 @@ def multiply(a: Decimal, b: Decimal) -> Decimal:
 @command("divide", "Returns the quotient of two Decimal numbers.", "divide <n1> <n2>")
 def divide(a: Decimal, b: Decimal) -> Decimal:
     """
-    Raises `DivisionByZeroError` if the divisor is zero.
+    Returns `None` if the divisor is zero, and logs a warning.
+    Otherwise, returns the quotient of two Decimal numbers.
     """
     if b == Decimal(0):
         raise DivisionByZeroError("Cannot divide by zero.")
@@ -94,6 +96,7 @@ def percent(a: Decimal, b: Decimal) -> Decimal:
 
 @command("abs_diff", "Returns the absolute difference between `a` and `b`.", "abs_diff <n1> <n2>")
 def abs_diff(a: Decimal, b: Decimal) -> Decimal:
+<<<<<<< fix-syntax-error-and-test-09cbceae
     return abs(a - b)
 
 @command("factorial", "Calculates the factorial of a non-negative integer.", "factorial <n>")
@@ -106,3 +109,6 @@ def factorial(a: Decimal) -> Decimal:
         raise InvalidOperationError("Factorial is only defined for non-negative integers.")
     # math.factorial requires an int, so convert Decimal to int
     return Decimal(math.factorial(int(a)))
+=======
+    return abs(a - b)
+>>>>>>> main

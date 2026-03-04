@@ -1,20 +1,3 @@
-"""
-Calculator REPL and Facade
-==========================
-
-This module provides the `Calculator` class, which serves as the main user-facing
-interface for the application. It implements the Facade design pattern to simplify
-the interaction with a complex subsystem of components.
-
-The `Calculator` class coordinates:
-- `CalculatorConfig` for settings management.
-- `CalculationHistory` for tracking operations.
-- `MementoCaretaker` for undo/redo functionality.
-- Observers (`LoggingObserver`, `AutoSaveObserver`) for event handling.
-- `input_validators` for command-line input validation.
-- `CalculationFactory` for creating arithmetic calculations.
-"""
-
 from __future__ import annotations
 import logging
 
@@ -30,6 +13,7 @@ from app.command_loader import command_manager
 from app.exceptions import (
     CalculationError,
     ConfigurationError,
+    DivisionByZeroError
 )
 from app.history import (
     AutoSaveObserver,
@@ -186,24 +170,23 @@ class Calculator:
             operand_a, operand_b = Decimal(raw_a), Decimal(raw_b)
             # The command handler for arithmetic operations is the operation function itself
             calc = Calculation(operand_a, operand_b, command_obj.handler, operation_name, self.config.precision)
+            calc.execute()  # Execute the calculation command
+            self.caretaker.save()
+            self.history.add(calc)
+            result_msg = f"Result: {calc}"
+            self._log.info("Calculation successful: %s -> %s", calc, calc.result)
+            print(f"{Fore.GREEN}{result_msg}")
+            return result_msg
         except InvalidOperation:
             msg = f"Error: Invalid number input. '{raw_a}' or '{raw_b}' is not a valid number."
             self._log.warning("Invalid number input: a='%s', b='%s'", raw_a, raw_b)
             print(f"{Fore.RED}{msg}")
             return msg
-        except CalculationError as e:
+        except (CalculationError, DivisionByZeroError) as e:
             msg = f"Error: {e}"
             self._log.error("Calculation error for %s(%s, %s): %s", operation_name, operand_a, operand_b, e)
             print(f"{Fore.RED}{msg}")
             return msg
-
-        # After a successful calculation, save state and update history.
-        self.caretaker.save()
-        self.history.add(calc)
-        result_msg = f"Result: {calc}"
-        self._log.info("Calculation successful: %s -> %s", calc, calc.result)
-        print(f"{Fore.GREEN}{result_msg}")
-        return result_msg
 
     @staticmethod
     def _print_welcome() -> None:  # pragma: no cover
