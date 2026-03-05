@@ -14,7 +14,7 @@ from unittest.mock import patch, MagicMock
 from decimal import Decimal
 
 from app import load_plugins
-from app.calculator_repl import Calculator
+from app.calculator_factory import CalculatorFactory
 from app.calculation import Calculation
 from app.history import LoggingObserver, CalculationHistory
 
@@ -75,7 +75,7 @@ def calculator_for_logging(tmp_path):
         f"CALCULATOR_HISTORY_DIR={tmp_path}/data\n"
         "CALCULATOR_AUTO_SAVE=false\n"
     )
-    return Calculator(env_path=str(env_path))
+    return CalculatorFactory.create_calculator(env_path=str(env_path))
 
 
 # ===========================================================================
