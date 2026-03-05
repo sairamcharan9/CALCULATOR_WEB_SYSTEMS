@@ -97,14 +97,3 @@ def percent(a: Decimal, b: Decimal) -> Decimal:
 @command("abs_diff", "Returns the absolute difference between `a` and `b`.", "abs_diff <n1> <n2>")
 def abs_diff(a: Decimal, b: Decimal) -> Decimal:
     return abs(a - b)
-
-@command("factorial", "Calculates the factorial of a non-negative integer.", "factorial <n>")
-def factorial(a: Decimal, b: Decimal = None) -> Decimal:
-    """
-    Calculates the factorial of a non-negative integer.
-    Raises `InvalidOperationError` for negative or non-integer inputs.
-    """
-    if not a.is_integer() or a < 0:
-        raise InvalidOperationError("Factorial is only defined for non-negative integers.")
-    # math.factorial requires an int, so convert Decimal to int
-    return Decimal(math.factorial(int(a)))

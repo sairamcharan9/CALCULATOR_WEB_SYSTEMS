@@ -53,7 +53,7 @@ The core of the application is an interactive Read-Eval-Print Loop (REPL), provi
 ### 🌟 Key Features
 
 - **🎨 Color-Coded Interface**: Intuitive feedback with Green results, Red errors, Blue history, and Magenta branding.
-- **⚡ Advanced Arithmetic**: Supports `add`, `subtract`, `multiply`, `divide`, `power`, `root`, `modulus`, `int_divide`, `percent`, `abs_diff`, and `factorial`.
+- **⚡ Advanced Arithmetic**: Supports `add`, `subtract`, `multiply`, `divide`, `power`, `root`, `modulus`, `int_divide`, `percent`, and `abs_diff`.
 - **🔄 Undo/Redo System**: Full state management allowing you to revert or repeat any calculation actions.
 - **💾 Persistent History**: Seamlessly manages calculation history using `pandas`, with CSV save/load support.
 - **🛠️ Design Patterns Focused**: Implements clean architecture using Facade, Strategy, Observer, and Memento patterns.
@@ -91,7 +91,7 @@ The application supports a rich set of arithmetic and special commands.
 
 ### Arithmetic Commands
 
-These commands perform standard calculations. All except `factorial` require two numbers.
+These commands perform standard calculations and require two numbers.
 
 | Command      | Description                                                    | Usage Example         |
 | :----------- | :------------------------------------------------------------- | :-------------------- |
@@ -105,7 +105,6 @@ These commands perform standard calculations. All except `factorial` require two
 | `int_divide` | Returns the integer part of the quotient of `a` divided by `b`. | `int_divide 10 3`     |
 | `percent`    | Calculates what percentage `a` is of `b`.                      | `percent 50 200`      |
 | `abs_diff`   | Returns the absolute difference between `a` and `b`.           | `abs_diff 5 10`       |
-| `factorial`  | Calculates the factorial of a non-negative integer.            | `factorial 5`         |
 
 ### Special Commands
 

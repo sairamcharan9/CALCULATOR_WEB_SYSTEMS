@@ -128,7 +128,7 @@ class TestCalculationFactory:
     def test_get_supported_operations(self) -> None:
         """Verify that all and only arithmetic operations are returned."""
         ops = CalculationFactory.get_supported_operations()
-        expected_ops = {"add", "subtract", "multiply", "divide", "power", "root", "modulus", "int_divide", "percent", "abs_diff", "factorial"}
+        expected_ops = {"add", "subtract", "multiply", "divide", "power", "root", "modulus", "int_divide", "percent", "abs_diff"}
         assert set(ops) == expected_ops
         
         # Check that a non-arithmetic command like 'greet' is not included
