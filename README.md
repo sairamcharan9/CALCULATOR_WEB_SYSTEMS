@@ -96,6 +96,24 @@ Our automated workflow handles:
 
 ---
 
+## 🤝 Contributing
+
+We welcome contributions to the Advanced Calculator Application! To contribute, please follow these steps:
+
+1.  **Fork the Repository**: Start by forking the project to your GitHub account.
+2.  **Clone Your Fork**:
+    ```bash
+    git clone https://github.com/your-username/calculator-app.git
+    ```
+3.  **Create a New Branch**:
+    ```bash
+    git checkout -b feature/your-feature-name
+    ```
+4.  **Make Your Changes**: Implement your feature or bug fix, adhering to the existing code style.
+5.  **Run Tests**: Ensure all tests pass and add new tests for your changes.
+6.  **Commit & Push**: Commit your changes with a clear message and push to your fork.
+7.  **Open a Pull Request**: Submit a pull request to the `main` branch of the original repository.
+
 ---
 
 <div align="center">
