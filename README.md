@@ -42,6 +42,7 @@ The core of the application is an interactive Read-Eval-Print Loop (REPL), provi
 - **💾 Persistent History**: Seamlessly manages calculation history using `pandas`, with CSV save/load support.
 - **🛠️ Design Patterns Focused**: Implements clean architecture using Facade, Strategy, Observer, and Memento patterns.
 - **🛡️ Robust Validation**: Comprehensive input validation and custom exception handling for all operations.
+- **ℹ️ About Command**: Displays application details, version, and author information.
 - **📊 Detailed Logging**: Centralized logging system capturing all events and errors for auditability.
 
 ## 🚀 Installation & Setup
