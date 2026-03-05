@@ -10,10 +10,9 @@ Tests for the Calculator facade class, covering:
 """
 
 import pytest
-from decimal import Decimal
-from unittest.mock import patch, MagicMock
 
 from app import load_plugins
+from app.calculator_factory import CalculatorFactory
 from app.calculator_repl import Calculator
 from app.exceptions import CalculationError
 
@@ -30,7 +29,7 @@ def calculator(tmp_path):
         "CALCULATOR_AUTO_SAVE=true\n"
         "CALCULATOR_PRECISION=2\n"
     )
-    return Calculator(env_path=str(env))
+    return CalculatorFactory.create_calculator(env_path=str(env))
 
 
 class TestCalculatorREPL:
@@ -165,7 +164,7 @@ class TestCalculatorREPL:
         msg = calculator.process_input("?")
         assert "Calculator Help" in msg
 
-    def test_autoload_logs_on_existing_csv(self, tmp_path) -> None:
+    def test_autoload_logs_on_existing__csv(self, tmp_path) -> None:
         """Auto-load logs INFO when a history CSV already exists on startup."""
         import logging
         import app.logger as logger_module
@@ -178,17 +177,17 @@ class TestCalculatorREPL:
             "CALCULATOR_AUTO_SAVE=false\n"
             "CALCULATOR_PRECISION=2\n"
         )
-        calc1 = Calculator(env_path=str(env))
+        calc1 = CalculatorFactory.create_calculator(env_path=str(env))
         calc1.process_input("add 3 4")
         calc1.process_input("save")
 
         for h in logging.getLogger("calculator").handlers:
             h.flush()
             h.close()
-            logging.getLogger("calculator").removeHandler(h)
+        logging.getLogger("calculator").handlers.clear()
         logger_module._is_configured = False
 
-        calc2 = Calculator(env_path=str(env))
+        calc2 = CalculatorFactory.create_calculator(env_path=str(env))
         log_path = tmp_path / "logs" / "autoload.log"
         for h in logging.getLogger("calculator").handlers:
             h.flush()

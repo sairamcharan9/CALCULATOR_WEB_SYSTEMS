@@ -5,7 +5,7 @@ This module initializes and runs the calculator's Read-Eval-Print Loop (REPL).
 It serves as the main entry point when the application is executed from the command line.
 """
 
-from app.calculator_repl import Calculator
+from app.calculator_factory import CalculatorFactory
 
 
 def main() -> None:
@@ -16,7 +16,7 @@ def main() -> None:
     application's core logic, and then calls its `run` method to start the
     interactive command-line interface.
     """
-    calculator = Calculator()
+    calculator = CalculatorFactory.create_calculator()
     calculator.run()
 
 
