@@ -99,7 +99,7 @@ def abs_diff(a: Decimal, b: Decimal) -> Decimal:
     return abs(a - b)
 
 @command("factorial", "Calculates the factorial of a non-negative integer.", "factorial <n>")
-def factorial(a: Decimal) -> Decimal:
+def factorial(a: Decimal, b: Decimal = None) -> Decimal:
     """
     Calculates the factorial of a non-negative integer.
     Raises `InvalidOperationError` for negative or non-integer inputs.
