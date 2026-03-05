@@ -1,27 +1,20 @@
 from __future__ import annotations
-import logging
 
+import logging
 from decimal import Decimal, InvalidOperation
-from app.calculation import Calculation, CalculationFactory
+
 import colorama
 from colorama import Fore
 
-colorama.init(autoreset=True)
+from app.calculation import Calculation
 from app.calculator_config import CalculatorConfig
 from app.calculator_memento import MementoCaretaker
 from app.command_loader import command_manager
-from app.exceptions import (
-    CalculationError,
-    ConfigurationError,
-    DivisionByZeroError
-)
-from app.history import (
-    AutoSaveObserver,
-    CalculationHistory,
-    LoggingObserver,
-)
+from app.exceptions import CalculationError, DivisionByZeroError
+from app.history import CalculationHistory
 from app.input_validators import validate_input_parts
-from app.logger import get_logger, reconfigure_logging
+
+colorama.init(autoreset=True)
 
 
 class Calculator:
@@ -39,57 +32,14 @@ class Calculator:
         caretaker (MementoCaretaker): The manager for the undo/redo mementos.
     """
 
-    def __init__(self, env_path: str | None = None) -> None:
+    def __init__(self) -> None:
         """
-        Initializes all calculator subsystems in the correct order.
-
-        Args:
-            env_path (str | None): Optional path to a `.env` file for configuration.
+        Initializes the Calculator, but delegates complex setup to the factory.
         """
-        # Step 1: Load Configuration
-        # Tries to load from a .env file. If it fails due to invalid values,
-        # it falls back to safe default settings to ensure the app can run.
-        try:
-            self.config = CalculatorConfig(env_path=env_path)
-        except ConfigurationError:  # pragma: no cover
-            self.config = CalculatorConfig()
-
-        # Step 2: Set up Centralized Logging
-        # This must be done early, as all other components use logging.
-        reconfigure_logging(
-            log_dir=self.config.log_dir,
-            log_file=self.config.log_file,
-            encoding=self.config.default_encoding,
-        )
-        self._log: logging.Logger = get_logger("repl")
-        self._log.info("Calculator initializing with config: %s", self.config)
-
-        # Step 3: Initialize Calculation History
-        self.history = CalculationHistory(
-            history_dir=self.config.history_dir,
-            history_file=self.config.history_file,
-            encoding=self.config.default_encoding,
-            max_size=self.config.max_history_size
-        )
-
-        # Step 4: Set up Observers
-        # Observers for logging and auto-saving are attached to the history.
-        self.logging_observer = LoggingObserver(
-            log_dir=self.config.log_dir,
-            log_file=self.config.log_file,
-            encoding=self.config.default_encoding
-        )
-        self.history.add_observer(self.logging_observer)
-        self.auto_save_observer = AutoSaveObserver(self.history, enabled=self.config.auto_save)
-        self.history.add_observer(self.auto_save_observer)
-
-        # Step 5: Initialize Memento Caretaker for Undo/Redo
-        self.caretaker = MementoCaretaker(self.history)
-
-        # Step 6: Automatically Load Existing History from CSV
-        loaded_count = self.history.load_from_csv()
-        if loaded_count > 0:
-            self._log.info("Auto-loaded %d calculation(s) from history CSV.", loaded_count)
+        self.config: CalculatorConfig | None = None
+        self.history: CalculationHistory | None = None
+        self.caretaker: MementoCaretaker | None = None
+        self._log: logging.Logger | None = None
 
     def run(self) -> None:  # pragma: no cover
         """Starts the Read-Eval-Print Loop (REPL) for user interaction."""
@@ -195,6 +145,5 @@ class Calculator:
             f"{Fore.MAGENTA}================================\n"
             f"   Welcome to the Calculator!\n"
             f"================================\n"
-            f"{Fore.CYAN}Type 'help' for available commands.\n"
-            f"Type 'exit' to quit."
+            f"{Fore.CYAN}Type 'help' for available commands.\nType 'exit' to quit."
         )
