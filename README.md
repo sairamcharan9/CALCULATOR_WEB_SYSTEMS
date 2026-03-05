@@ -4,7 +4,7 @@
 
   ![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)
   ![Coverage](https://img.shields.io/badge/Coverage-97%25-brightgreen.svg)
-  ![Design Patterns](https://img.shields.io/badge/Design_Patterns-Facade_|_Observer_|_Strategy-purple.svg)
+  ![Design Patterns](https://img.shields.io/badge/Design_Patterns-Facade_|_Observer_|_Strategy_|_Memento-purple.svg)
 </div>
 
 <br />
