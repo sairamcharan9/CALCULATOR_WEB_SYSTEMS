@@ -4,10 +4,26 @@
 
   ![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)
   ![Coverage](https://img.shields.io/badge/Coverage-97%25-brightgreen.svg)
-  ![Design Patterns](https://img.shields.io/badge/Design_Patterns-Facade_|_Observer_|_Strategy-purple.svg)
+  ![Design Patterns](https://img.shields.io/badge/Design_Patterns-Facade_|_Observer_|_Strategy_|_Memento-purple.svg)
 </div>
 
 <br />
+
+## 📋 Table of Contents
+
+- [📸 Showcase & REPL Demo](#-showcase--repl-demo)
+- [📖 Project Description](#-project-description)
+  - [🌟 Key Features](#-key-features)
+- [🚀 Installation & Setup](#-installation--setup)
+  - [1. Clone & Environment](#1-clone--environment)
+  - [2. Install Dependencies](#2-install-dependencies)
+  - [3. Usage](#3-usage)
+- [⚙️ Configuration](#️-configuration)
+- [🧪 Testing and Quality](#-testing-and-quality)
+  - [Running Tests](#running-tests)
+  - [GitHub Actions (CI)](#github-actions-ci)
+- [🤝 Contributing](#-contributing)
+- [📜 License](#-license)
 
 ## 📸 Showcase & REPL Demo
 
@@ -30,7 +46,7 @@ Experience our intuitive, color-coded REPL interface in action. The application 
 
 ## 📖 Project Description
 
-This project is a sophisticated command-line calculator application built with Python, showcasing the integration of advanced software design patterns (Facade, Observer, Strategy, and Memento) to create a modular, extensible, and maintainable system. It moves beyond basic arithmetic to offer a rich feature set including persistent history, undo/redo functionality, and comprehensive logging, all configurable via environment variables.
+This project is a sophisticated command-line calculator application built with Python, showcasing the integration of advanced software design patterns (Facade, Observer, Strategy, and Memento) to create a modular, extensible, and maintainable system. It moves beyond basic arithmetic to offer a rich feature set including persistent history, dynamic plugins, undo/redo functionality, and comprehensive logging, all configurable via environment variables.
 
 The core of the application is an interactive Read-Eval-Print Loop (REPL), providing a seamless user experience for performing calculations with full color-coded feedback!
 
@@ -41,14 +57,16 @@ The core of the application is an interactive Read-Eval-Print Loop (REPL), provi
 - **🔄 Undo/Redo System**: Full state management allowing you to revert or repeat any calculation actions.
 - **💾 Persistent History**: Seamlessly manages calculation history using `pandas`, with CSV save/load support.
 - **🛠️ Design Patterns Focused**: Implements clean architecture using Facade, Strategy, Observer, and Memento patterns.
+- **🧩 Dynamic Plugins**: Extensible command system allowing new features to be added as plugins.
 - **🛡️ Robust Validation**: Comprehensive input validation and custom exception handling for all operations.
 - **📊 Detailed Logging**: Centralized logging system capturing all events and errors for auditability.
+- **🧪 Modular Testing**: High-coverage unit tests to ensure reliability and maintainability.
 
 ## 🚀 Installation & Setup
 
 ### 1. Clone & Environment
 ```bash
-git clone https://github.com/your-username/calculator-app.git
+git clone https://github.com/username/repository.git
 cd calculator-app
 python -m venv venv
 # Windows: venv\Scripts\activate | macOS/Linux: source venv/bin/activate
@@ -95,6 +113,23 @@ Our automated workflow handles:
 - ✅ Coverage threshold enforcement
 
 ---
+
+## 🤝 Contributing
+
+Contributions are welcome! If you'd like to help improve the application, please follow these steps:
+
+1.  **Fork the repository** on GitHub.
+2.  **Clone your fork** to your local machine.
+3.  **Create a new branch** for your feature or bug fix.
+4.  **Make your changes** and commit them with clear messages.
+5.  **Push your branch** to your fork on GitHub.
+6.  **Submit a pull request** to the main repository.
+
+---
+
+## 📜 License
+
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
 
 ---
 
