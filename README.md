@@ -2,7 +2,7 @@
   <h1>🧮 Advanced Calculator Application</h1>
   <p><i>A beautifully styled, fully-featured command-line calculator built with Python.</i></p>
 
-  ![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)
+  ![Python](https://img.shields.io/badge/Python-3.9+-blue.svg)
   ![Coverage](https://img.shields.io/badge/Coverage-97%25-brightgreen.svg)
   ![Design Patterns](https://img.shields.io/badge/Design_Patterns-Facade_|_Observer_|_Strategy-purple.svg)
 </div>
@@ -48,10 +48,12 @@ The core of the application is an interactive Read-Eval-Print Loop (REPL), provi
 
 ### 1. Clone & Environment
 ```bash
-git clone https://github.com/your-username/calculator-app.git
+git clone https://github.com/example/calculator-app.git # NOTE: Replace with your actual repository URL
 cd calculator-app
 python -m venv venv
-# Windows: venv\Scripts\activate | macOS/Linux: source venv/bin/activate
+# To activate the virtual environment:
+# Windows: .\venv\Scripts\activate
+# macOS/Linux: source ./venv/bin/activate
 ```
 
 ### 2. Install Dependencies
