@@ -1,4 +1,8 @@
 from abc import ABC, abstractmethod
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from app.calculator_repl import Calculator
 
 class Command(ABC):
     """
@@ -11,3 +15,10 @@ class Command(ABC):
         Executes the command.
         """
         pass
+
+class CalculatorCommand(Command):
+    """
+    Abstract base class for commands that operate on the Calculator instance.
+    """
+    def __init__(self, calculator: 'Calculator'):
+        self.calculator = calculator

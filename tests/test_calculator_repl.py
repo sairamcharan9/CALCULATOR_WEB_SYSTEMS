@@ -122,7 +122,7 @@ class TestCalculatorREPL:
     def test_invalid_input(self, calculator: Calculator) -> None:
         """Invalid commands/operands return error messages."""
         assert "Invalid number of arguments" in calculator.process_input("add 1")
-        assert "Unknown operation" in calculator.process_input("unknown 1 2")
+        assert "Error: Unknown command 'unknown'." in calculator.process_input("unknown 1 2")
         assert "not a valid number" in calculator.process_input("add abc 1")
 
     def test_save_load(self, calculator: Calculator) -> None:

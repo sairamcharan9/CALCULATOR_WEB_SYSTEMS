@@ -150,11 +150,33 @@ class Calculator:
                 print(f"Error: {e}")
                 return str(e)
 
-        validation_error = validate_input_parts(parts, self.config.max_input_value)
-        if validation_error:
-            self._log.warning("Invalid input: %s (raw: '%s')", validation_error, user_input)
-            print(f"{Fore.RED}{validation_error}")
-            return validation_error
+        # If not a registered command, check if it's explicitly "calc" for arithmetic operations
+        if command == "calc":
+            # "calc <operation> <n1> <n2>" needs at least 4 parts: "calc", operation, operand_a, operand_b
+            if len(parts) < 4:
+                msg = "Error: Usage for 'calc' is 'calc <operation> <n1> <n2>'."
+                print(f"{Fore.RED}{msg}")
+                self._log.warning(msg)
+                return msg
+
+            # The actual arithmetic operation is the second part (parts[1])
+            arithmetic_operation_name = parts[1]
+            arithmetic_command_obj = command_manager.get_command(arithmetic_operation_name)
+            
+            if arithmetic_command_obj and "<" in arithmetic_command_obj.usage:
+                # Pass the actual operation and its operands (from parts[1] onwards)
+                return self._handle_arithmetic_command(arithmetic_command_obj, parts[1:])
+            else:
+                msg = f"Error: '{arithmetic_operation_name}' is not a valid arithmetic operation for 'calc'."
+                print(f"{Fore.RED}{msg}")
+                self._log.warning(msg)
+                return msg
+        else:
+            # If it's not a registered command and not "calc", it's an unknown command
+            msg = f"Error: Unknown command '{command}'."
+            self._log.warning(msg)
+            print(f"{Fore.RED}{msg}")
+            return msg
 
     def _handle_arithmetic_command(self, command_obj, parts):
         """Handles the execution of arithmetic commands."""
