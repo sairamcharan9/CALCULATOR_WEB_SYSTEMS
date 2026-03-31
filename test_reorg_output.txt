@@ -1,0 +1,251 @@
+﻿============================= test session starts =============================
+platform win32 -- Python 3.13.3, pytest-9.0.2, pluggy-1.6.0 -- C:\Users\saira\Desktop\college workspace\MidtermCalclulator\venv\Scripts\python.exe
+cachedir: .pytest_cache
+rootdir: C:\Users\saira\Desktop\college workspace\MidtermCalclulator
+configfile: pytest.ini
+plugins: anyio-4.13.0, Faker-40.12.0, asyncio-1.3.0, cov-7.1.0
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collecting ... collected 197 items
+
+tests/unit/test_calculations.py::TestCalculation::test_calculation_result[a0-b0-add-add-expected0] PASSED [  0%]
+tests/unit/test_calculations.py::TestCalculation::test_calculation_result[a1-b1-subtract-subtract-expected1] PASSED [  1%]
+tests/unit/test_calculations.py::TestCalculation::test_calculation_result[a2-b2-multiply-multiply-expected2] PASSED [  1%]
+tests/unit/test_calculations.py::TestCalculation::test_calculation_result[a3-b3-divide-divide-expected3] PASSED [  2%]
+tests/unit/test_calculations.py::TestCalculation::test_calculation_result[a4-b4-nth_power-power-expected4] PASSED [  2%]
+tests/unit/test_calculations.py::TestCalculation::test_calculation_result[a5-b5-nth_root-root-expected5] PASSED [  3%]
+tests/unit/test_calculations.py::TestCalculation::test_calculation_result[a6-b6-modulus-modulus-expected6] PASSED [  3%]
+tests/unit/test_calculations.py::TestCalculation::test_calculation_result[a7-b7-int_divide-int_divide-expected7] PASSED [  4%]
+tests/unit/test_calculations.py::TestCalculation::test_calculation_result[a8-b8-percent-percent-expected8] PASSED [  4%]
+tests/unit/test_calculations.py::TestCalculation::test_calculation_result[a9-b9-abs_diff-abs_diff-expected9] PASSED [  5%]
+tests/unit/test_calculations.py::TestCalculation::test_repr PASSED       [  5%]
+tests/unit/test_calculations.py::TestCalculation::test_str_formatting[a0-b0-add-add-5 + 3 = 8.00] PASSED [  6%]
+tests/unit/test_calculations.py::TestCalculation::test_str_formatting[a1-b1-modulus-modulus-10 % 3 = 1.00] PASSED [  6%]
+tests/unit/test_calculations.py::TestCalculation::test_division_by_zero PASSED [  7%]
+tests/unit/test_calculations.py::TestCalculationFactory::test_create_valid[add-a0-b0-expected0] PASSED [  7%]
+tests/unit/test_calculations.py::TestCalculationFactory::test_create_valid[subtract-a1-b1-expected1] PASSED [  8%]
+tests/unit/test_calculations.py::TestCalculationFactory::test_create_valid[multiply-a2-b2-expected2] PASSED [  8%]
+tests/unit/test_calculations.py::TestCalculationFactory::test_create_valid[divide-a3-b3-expected3] PASSED [  9%]
+tests/unit/test_calculations.py::TestCalculationFactory::test_create_valid[power-a4-b4-expected4] PASSED [  9%]
+tests/unit/test_calculations.py::TestCalculationFactory::test_create_valid[root-a5-b5-expected5] PASSED [ 10%]
+tests/unit/test_calculations.py::TestCalculationFactory::test_create_valid[modulus-a6-b6-expected6] PASSED [ 10%]
+tests/unit/test_calculations.py::TestCalculationFactory::test_create_valid[int_divide-a7-b7-expected7] PASSED [ 11%]
+tests/unit/test_calculations.py::TestCalculationFactory::test_create_valid[percent-a8-b8-expected8] PASSED [ 11%]
+tests/unit/test_calculations.py::TestCalculationFactory::test_create_valid[abs_diff-a9-b9-expected9] PASSED [ 12%]
+tests/unit/test_calculations.py::TestCalculationFactory::test_create_unknown_operation PASSED [ 12%]
+tests/unit/test_calculations.py::TestCalculationFactory::test_create_non_arithmetic_command PASSED [ 13%]
+tests/unit/test_calculations.py::TestCalculationFactory::test_get_supported_operations FAILED [ 13%]
+tests/unit/test_calculator_config.py::TestConfigLoading::test_defaults PASSED [ 14%]
+tests/unit/test_calculator_config.py::TestConfigLoading::test_load_from_env_file PASSED [ 14%]
+tests/unit/test_calculator_config.py::TestConfigLoading::test_repr PASSED [ 15%]
+tests/unit/test_calculator_config.py::TestParsers::test_parse_non_negative_int PASSED [ 15%]
+tests/unit/test_calculator_config.py::TestParsers::test_parse_float PASSED [ 16%]
+tests/unit/test_calculator_config.py::TestParsers::test_parse_bool_valid_values PASSED [ 16%]
+tests/unit/test_calculator_config.py::TestParsers::test_parse_bool_invalid_value PASSED [ 17%]
+tests/unit/test_calculator_config.py::TestParsers::test_parse_positive_int_valid PASSED [ 17%]
+tests/unit/test_calculator_config.py::TestParsers::test_parse_positive_int_zero_raises PASSED [ 18%]
+tests/unit/test_calculator_config.py::TestParsers::test_parse_positive_int_negative_raises PASSED [ 18%]
+tests/unit/test_calculator_config.py::TestParsers::test_parse_positive_int_non_numeric_raises PASSED [ 19%]
+tests/unit/test_calculator_config.py::TestValidation::test_blank_log_dir_raises PASSED [ 19%]
+tests/unit/test_calculator_config.py::TestValidation::test_blank_log_file_raises PASSED [ 20%]
+tests/unit/test_calculator_config.py::TestValidation::test_blank_history_dir_raises PASSED [ 20%]
+tests/unit/test_calculator_config.py::TestValidation::test_blank_history_file_raises PASSED [ 21%]
+tests/unit/test_calculator_config.py::TestValidation::test_precision_too_high_raises PASSED [ 21%]
+tests/unit/test_calculator_config.py::TestValidation::test_precision_at_max_is_valid PASSED [ 22%]
+tests/unit/test_calculator_config.py::TestValidation::test_negative_max_input_value_raises PASSED [ 22%]
+tests/unit/test_calculator_config.py::TestValidation::test_zero_max_input_value_raises PASSED [ 23%]
+tests/unit/test_calculator_config.py::TestValidation::test_unsupported_encoding_raises PASSED [ 23%]
+tests/unit/test_calculator_config.py::TestValidation::test_valid_encodings_accepted PASSED [ 24%]
+tests/unit/test_calculator_config.py::TestRepr::test_repr_includes_all_fields PASSED [ 24%]
+tests/unit/test_calculator_memento.py::TestCalculatorMemento::test_memento_stores_copy PASSED [ 25%]
+tests/unit/test_calculator_memento.py::TestCalculatorMemento::test_repr PASSED [ 25%]
+tests/unit/test_calculator_memento.py::TestMementoUndo::test_undo_empty PASSED [ 26%]
+tests/unit/test_calculator_memento.py::TestMementoUndo::test_undo_restores_state PASSED [ 26%]
+tests/unit/test_calculator_memento.py::TestMementoUndo::test_can_undo PASSED [ 27%]
+tests/unit/test_calculator_memento.py::TestMementoRedo::test_redo_empty PASSED [ 27%]
+tests/unit/test_calculator_memento.py::TestMementoRedo::test_redo_after_undo PASSED [ 28%]
+tests/unit/test_calculator_memento.py::TestMementoRedo::test_can_redo PASSED [ 28%]
+tests/unit/test_calculator_memento.py::TestUndoRedoInteraction::test_save_clears_redo_stack PASSED [ 29%]
+tests/unit/test_calculator_memento.py::TestUndoRedoInteraction::test_multiple_undos PASSED [ 29%]
+tests/unit/test_calculator_memento.py::TestStackSizes::test_initial_stack_sizes PASSED [ 30%]
+tests/unit/test_calculator_memento.py::TestStackSizes::test_undo_stack_grows_on_save PASSED [ 30%]
+tests/unit/test_calculator_memento.py::TestStackSizes::test_redo_stack_grows_on_undo PASSED [ 31%]
+tests/unit/test_calculator_memento.py::TestStackSizes::test_stack_sizes_after_full_cycle PASSED [ 31%]
+tests/unit/test_calculator_memento.py::TestUndoRedoChain::test_undo_then_redo_chain PASSED [ 32%]
+tests/unit/test_calculator_memento.py::TestUndoRedoChain::test_new_action_after_undo_clears_redo PASSED [ 32%]
+tests/unit/test_commands.py::test_command_manager_singleton PASSED       [ 33%]
+tests/unit/test_commands.py::test_register_and_get_command PASSED        [ 34%]
+tests/unit/test_commands.py::test_get_nonexistent_command PASSED         [ 34%]
+tests/unit/test_commands.py::test_get_all_commands PASSED                [ 35%]
+tests/unit/test_commands.py::test_register_command_decorator PASSED      [ 35%]
+tests/unit/test_commands.py::test_plugin_loading_mechanism PASSED        [ 36%]
+tests/unit/test_history.py::TestCalculationHistoryBasics::test_empty_history PASSED [ 36%]
+tests/unit/test_history.py::TestCalculationHistoryBasics::test_add_and_get_all PASSED [ 37%]
+tests/unit/test_history.py::TestCalculationHistoryBasics::test_clear PASSED [ 37%]
+tests/unit/test_history.py::TestCalculationHistoryBasics::test_repr PASSED [ 38%]
+tests/unit/test_history.py::TestCalculationHistoryBasics::test_get_calculations PASSED [ 38%]
+tests/unit/test_history.py::TestObserverPattern::test_add_and_notify_observer PASSED [ 39%]
+tests/unit/test_history.py::TestLoggingObserver::test_logs_calculation PASSED [ 39%]
+tests/unit/test_history.py::TestCSVPersistence::test_save_and_load PASSED [ 40%]
+tests/unit/test_history.py::TestCSVPersistence::test_load_nonexistent_file PASSED [ 40%]
+tests/unit/test_history.py::TestCSVPersistence::test_auto_save_observer PASSED [ 41%]
+tests/unit/test_history.py::TestCSVPersistence::test_save_to_custom_path_creates_dirs PASSED [ 41%]
+tests/unit/test_history.py::TestCSVPersistence::test_load_from_csv_exception_returns_zero PASSED [ 42%]
+tests/unit/test_history.py::TestCSVPersistence::test_add_trims_to_max_size PASSED [ 42%]
+tests/unit/test_history.py::TestCSVPersistence::test_load_from_csv_trims_to_max_size PASSED [ 43%]
+tests/unit/test_history.py::TestCSVPersistence::test_load_from_csv_with_missing_columns PASSED [ 43%]
+tests/unit/test_history.py::TestObserverRemoval::test_remove_observer_stops_notifications PASSED [ 44%]
+tests/unit/test_history.py::TestGetCalculations::test_get_calculations_empty PASSED [ 44%]
+tests/unit/test_history.py::TestGetCalculations::test_get_calculations_multiple PASSED [ 45%]
+tests/unit/test_history.py::TestGetCalculations::test_get_calculations_malformed_row_skipped PASSED [ 45%]
+tests/unit/test_input_validators.py::TestInputValidators::test_validate_input_parts_empty_input PASSED [ 46%]
+tests/unit/test_input_validators.py::TestInputValidators::test_validate_input_parts_incorrect_number_of_parts[parts0-Error: Invalid format. Please use: <operation> <number1> <number2>\nExample: add 5 3\nType 'help' for available commands.] PASSED [ 46%]
+tests/unit/test_input_validators.py::TestInputValidators::test_validate_input_parts_incorrect_number_of_parts[parts1-Error: Invalid format. Please use: <operation> <number1> <number2>\nExample: add 5 3\nType 'help' for available commands.] PASSED [ 47%]
+tests/unit/test_input_validators.py::TestInputValidators::test_validate_input_parts_incorrect_number_of_parts[parts2-Error: Invalid format. Please use: <operation> <number1> <number2>\nExample: add 5 3\nType 'help' for available commands.] PASSED [ 47%]
+tests/unit/test_input_validators.py::TestInputValidators::test_validate_input_parts_non_numeric_operands[parts0-Error: 'abc' is not a valid number.] PASSED [ 48%]
+tests/unit/test_input_validators.py::TestInputValidators::test_validate_input_parts_non_numeric_operands[parts1-Error: 'xyz' is not a valid number.] PASSED [ 48%]
+tests/unit/test_input_validators.py::TestInputValidators::test_validate_input_parts_operands_exceeding_max_value[parts0-10000000000.0-Error: Operand '1e11' exceeds the maximum allowed value of 10000000000.0.] PASSED [ 49%]
+tests/unit/test_input_validators.py::TestInputValidators::test_validate_input_parts_operands_exceeding_max_value[parts1-10000000000.0-Error: Operand '1e11' exceeds the maximum allowed value of 10000000000.0.] PASSED [ 49%]
+tests/unit/test_input_validators.py::TestInputValidators::test_validate_input_parts_operands_exceeding_max_value[parts2-10000000000.0-Error: Operand '-1e11' exceeds the maximum allowed value of 10000000000.0.] PASSED [ 50%]
+tests/unit/test_input_validators.py::TestInputValidators::test_validate_input_parts_valid_input[parts0-10000000000.0] PASSED [ 50%]
+tests/unit/test_input_validators.py::TestInputValidators::test_validate_input_parts_valid_input[parts1-10000000000.0] PASSED [ 51%]
+tests/unit/test_input_validators.py::TestInputValidators::test_validate_numeric_valid_input[123-expected0] PASSED [ 51%]
+tests/unit/test_input_validators.py::TestInputValidators::test_validate_numeric_valid_input[123.45-expected1] PASSED [ 52%]
+tests/unit/test_input_validators.py::TestInputValidators::test_validate_numeric_valid_input[-10-expected2] PASSED [ 52%]
+tests/unit/test_input_validators.py::TestInputValidators::test_validate_numeric_valid_input[0-expected3] PASSED [ 53%]
+tests/unit/test_input_validators.py::TestInputValidators::test_validate_numeric_valid_input[.5-expected4] PASSED [ 53%]
+tests/unit/test_input_validators.py::TestInputValidators::test_validate_numeric_valid_input[1e-5-expected5] PASSED [ 54%]
+tests/unit/test_input_validators.py::TestInputValidators::test_validate_numeric_valid_input[1e5-expected6] PASSED [ 54%]
+tests/unit/test_input_validators.py::TestInputValidators::test_validate_numeric_invalid_input PASSED [ 55%]
+tests/unit/test_logger.py::TestConfigureLogging::test_creates_log_file PASSED [ 55%]
+tests/unit/test_logger.py::TestConfigureLogging::test_idempotent PASSED  [ 56%]
+tests/unit/test_logger.py::TestConfigureLogging::test_file_handler_present PASSED [ 56%]
+tests/unit/test_logger.py::TestReconfigureLogging::test_switches_log_file PASSED [ 57%]
+tests/unit/test_logger.py::TestReconfigureLogging::test_handler_count_remains_two PASSED [ 57%]
+tests/unit/test_logger.py::TestGetLogger::test_returns_child_logger PASSED [ 58%]
+tests/unit/test_logger.py::TestGetLogger::test_child_logger_inherits_parent PASSED [ 58%]
+tests/unit/test_logger.py::TestLoggingObserverIntegration::test_observer_logs_to_file PASSED [ 59%]
+tests/unit/test_logger.py::TestLoggingObserverIntegration::test_observer_uses_info_level PASSED [ 59%]
+tests/unit/test_logger.py::TestREPLLogging::test_successful_calculation_logged_info PASSED [ 60%]
+tests/unit/test_logger.py::TestREPLLogging::test_failed_calculation_logged_error PASSED [ 60%]
+tests/unit/test_logger.py::TestREPLLogging::test_invalid_input_logged_warning PASSED [ 61%]
+tests/unit/test_logger.py::TestREPLLogging::test_undo_logged PASSED      [ 61%]
+tests/unit/test_logger.py::TestREPLLogging::test_save_logged PASSED      [ 62%]
+tests/unit/test_operations.py::test_add[a0-b0-expected0] PASSED          [ 62%]
+tests/unit/test_operations.py::test_add[a1-b1-expected1] PASSED          [ 63%]
+tests/unit/test_operations.py::test_add[a2-b2-expected2] PASSED          [ 63%]
+tests/unit/test_operations.py::test_add[a3-b3-expected3] PASSED          [ 64%]
+tests/unit/test_operations.py::test_add[a4-b4-expected4] PASSED          [ 64%]
+tests/unit/test_operations.py::test_subtract[a0-b0-expected0] PASSED     [ 65%]
+tests/unit/test_operations.py::test_subtract[a1-b1-expected1] PASSED     [ 65%]
+tests/unit/test_operations.py::test_subtract[a2-b2-expected2] PASSED     [ 66%]
+tests/unit/test_operations.py::test_multiply[a0-b0-expected0] PASSED     [ 67%]
+tests/unit/test_operations.py::test_multiply[a1-b1-expected1] PASSED     [ 67%]
+tests/unit/test_operations.py::test_multiply[a2-b2-expected2] PASSED     [ 68%]
+tests/unit/test_operations.py::test_divide[a0-b0-expected0] PASSED       [ 68%]
+tests/unit/test_operations.py::test_divide[a1-b1-expected1] PASSED       [ 69%]
+tests/unit/test_operations.py::test_divide_by_zero PASSED                [ 69%]
+tests/unit/test_operations.py::test_nth_power[a0-b0-expected0] PASSED    [ 70%]
+tests/unit/test_operations.py::test_nth_power[a1-b1-expected1] PASSED    [ 70%]
+tests/unit/test_operations.py::test_nth_root[a0-b0-expected0] PASSED     [ 71%]
+tests/unit/test_operations.py::test_nth_root[a1-b1-expected1] PASSED     [ 71%]
+tests/unit/test_operations.py::test_root_by_zero PASSED                  [ 72%]
+tests/unit/test_operations.py::test_modulus[a0-b0-expected0] PASSED      [ 72%]
+tests/unit/test_operations.py::test_modulus[a1-b1-expected1] PASSED      [ 73%]
+tests/unit/test_operations.py::test_modulus_by_zero PASSED               [ 73%]
+tests/unit/test_operations.py::test_int_divide[a0-b0-expected0] PASSED   [ 74%]
+tests/unit/test_operations.py::test_int_divide[a1-b1-expected1] PASSED   [ 74%]
+tests/unit/test_operations.py::test_int_divide_by_zero PASSED            [ 75%]
+tests/unit/test_operations.py::test_percent[a0-b0-expected0] PASSED      [ 75%]
+tests/unit/test_operations.py::test_percent[a1-b1-expected1] PASSED      [ 76%]
+tests/unit/test_operations.py::test_percent_by_zero PASSED               [ 76%]
+tests/unit/test_operations.py::test_abs_diff[a0-b0-expected0] PASSED     [ 77%]
+tests/unit/test_operations.py::test_abs_diff[a1-b1-expected1] PASSED     [ 77%]
+tests/unit/test_operations.py::test_abs_diff[a2-b2-expected2] PASSED     [ 78%]
+tests/unit/test_operations.py::TestOperationRegistration::test_arithmetic_commands_are_registered[add] PASSED [ 78%]
+tests/unit/test_operations.py::TestOperationRegistration::test_arithmetic_commands_are_registered[subtract] PASSED [ 79%]
+tests/unit/test_operations.py::TestOperationRegistration::test_arithmetic_commands_are_registered[multiply] PASSED [ 79%]
+tests/unit/test_operations.py::TestOperationRegistration::test_arithmetic_commands_are_registered[divide] PASSED [ 80%]
+tests/unit/test_operations.py::TestOperationRegistration::test_arithmetic_commands_are_registered[power] PASSED [ 80%]
+tests/unit/test_operations.py::TestOperationRegistration::test_arithmetic_commands_are_registered[root] PASSED [ 81%]
+tests/unit/test_operations.py::TestOperationRegistration::test_arithmetic_commands_are_registered[modulus] PASSED [ 81%]
+tests/unit/test_operations.py::TestOperationRegistration::test_arithmetic_commands_are_registered[int_divide] PASSED [ 82%]
+tests/unit/test_operations.py::TestOperationRegistration::test_arithmetic_commands_are_registered[percent] PASSED [ 82%]
+tests/unit/test_operations.py::TestOperationRegistration::test_arithmetic_commands_are_registered[abs_diff] PASSED [ 83%]
+tests/cli/test_calculator_repl.py::TestCalculatorREPL::test_process_input_arithmetic PASSED [ 83%]
+tests/cli/test_calculator_repl.py::TestCalculatorREPL::test_process_input_special_commands PASSED [ 84%]
+tests/cli/test_calculator_repl.py::TestCalculatorREPL::test_undo_redo PASSED [ 84%]
+tests/cli/test_calculator_repl.py::TestCalculatorREPL::test_undo_nothing PASSED [ 85%]
+tests/cli/test_calculator_repl.py::TestCalculatorREPL::test_redo_nothing PASSED [ 85%]
+tests/cli/test_calculator_repl.py::TestCalculatorREPL::test_failed_calc_does_not_pollute_undo_stack PASSED [ 86%]
+tests/cli/test_calculator_repl.py::TestCalculatorREPL::test_undo_redo_after_multiple_calcs PASSED [ 86%]
+tests/cli/test_calculator_repl.py::TestCalculatorREPL::test_redo_after_clear_undo PASSED [ 87%]
+tests/cli/test_calculator_repl.py::TestCalculatorREPL::test_invalid_input PASSED [ 87%]
+tests/cli/test_calculator_repl.py::TestCalculatorREPL::test_save_load PASSED [ 88%]
+tests/cli/test_calculator_repl.py::TestCalculatorREPL::test_empty_input_returns_empty_string PASSED [ 88%]
+tests/cli/test_calculator_repl.py::TestCalculatorREPL::test_greet_command PASSED [ 89%]
+tests/cli/test_calculator_repl.py::TestCalculatorREPL::test_history_empty_message PASSED [ 89%]
+tests/cli/test_calculator_repl.py::TestCalculatorREPL::test_history_with_entries PASSED [ 90%]
+tests/cli/test_calculator_repl.py::TestCalculatorREPL::test_question_mark_shows_help PASSED [ 90%]
+tests/cli/test_calculator_repl.py::TestCalculatorREPL::test_autoload_logs_on_existing__csv PASSED [ 91%]
+tests/fastapi/integration/test_api.py::test_api_add PASSED               [ 91%]
+tests/fastapi/integration/test_api.py::test_api_subtract PASSED          [ 92%]
+tests/fastapi/integration/test_api.py::test_api_multiply PASSED          [ 92%]
+tests/fastapi/integration/test_api.py::test_api_divide PASSED            [ 93%]
+tests/fastapi/integration/test_api.py::test_api_divide_by_zero PASSED    [ 93%]
+tests/fastapi/integration/test_api.py::test_api_power PASSED             [ 94%]
+tests/fastapi/integration/test_api.py::test_api_root PASSED              [ 94%]
+tests/fastapi/integration/test_api.py::test_api_memory_lifecycle PASSED  [ 95%]
+tests/fastapi/integration/test_api.py::test_api_history PASSED           [ 95%]
+tests/fastapi/integration/test_api.py::test_api_modulus PASSED           [ 96%]
+tests/fastapi/integration/test_api.py::test_api_int_divide PASSED        [ 96%]
+tests/fastapi/integration/test_api.py::test_api_percent PASSED           [ 97%]
+tests/fastapi/integration/test_api.py::test_api_abs_diff PASSED          [ 97%]
+tests/fastapi/integration/test_api.py::test_api_memory_clear PASSED      [ 98%]
+tests/fastapi/integration/test_api.py::test_api_history_clear PASSED     [ 98%]
+tests/fastapi/integration/test_api.py::test_api_undo PASSED              [ 99%]
+tests/fastapi/integration/test_api.py::test_api_redo PASSED              [100%]
+
+================================== FAILURES ===================================
+____________ TestCalculationFactory.test_get_supported_operations _____________
+tests\unit\test_calculations.py:132: in test_get_supported_operations
+    assert set(ops) == expected_ops
+E   AssertionError: assert {'add', 'subtract', 'percent', 'memory', 'divide', 'abs_diff', 'int_divide', 'root', 'multiply', 'power', 'modulus'} == {'add', 'percent', 'modulus', 'divide', 'abs_diff', 'int_divide', 'root', 'multiply', 'power', 'subtract'}
+E     
+E     Extra items in the left set:
+E     'memory'
+E     
+E     Full diff:
+E       {
+E           'abs_diff',
+E           'add',
+E           'divide',
+E           'int_divide',
+E     +     'memory',
+E           'modulus',
+E           'multiply',
+E           'percent',
+E           'power',
+E           'root',
+E           'subtract',
+E       }
+=========================== short test summary info ===========================
+FAILED tests/unit/test_calculations.py::TestCalculationFactory::test_get_supported_operations - AssertionError: assert {'add', 'subtract', 'percent', 'memory', 'divide', 'abs_diff', 'int_divide', 'root', 'multiply', 'power', 'modulus'} == {'add', 'percent', 'modulus', 'divide', 'abs_diff', 'int_divide', 'root', 'multiply', 'power', 'subtract'}
+  
+  Extra items in the left set:
+  'memory'
+  
+  Full diff:
+    {
+        'abs_diff',
+        'add',
+        'divide',
+        'int_divide',
+  +     'memory',
+        'modulus',
+        'multiply',
+        'percent',
+        'power',
+        'root',
+        'subtract',
+    }
+======================== 1 failed, 196 passed in 1.92s ========================

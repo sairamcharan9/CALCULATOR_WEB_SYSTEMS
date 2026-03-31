@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Web Calculator</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #121212; color: #fff; text-align: center; margin-top: 50px; }
+        .calculator { display: inline-block; background: #1e1e1e; padding: 20px; border-radius: 12px; box-shadow: 0px 4px 15px rgba(0,0,0,0.5); width: 450px; }
+        h1 { color: #f0f0f0; margin-bottom: 5px; }
+        h4 { color: #aaa; font-weight: normal; margin-top: 0; margin-bottom: 20px; }
+        input { width: calc(100% - 20px); padding: 10px; margin: 10px 0; border: none; border-radius: 4px; background: #333; color: white; font-size: 16px; box-sizing: border-box;}
+        .button-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 15px; }
+        button { background: #6200ea; color: white; border: none; padding: 12px; font-size: 14px; border-radius: 6px; cursor: pointer; transition: 0.2s; }
+        button:hover { background: #3700b3; }
+        .adv-btn { background: #03dac6; color: #000; font-weight: bold; }
+        .adv-btn:hover { background: #018786; }
+        #result-box { margin-top: 20px; padding: 15px; border-radius: 8px; font-size: 16px; background: #222; border: 1px solid #444; min-height: 40px; white-space: pre-wrap; }
+        .success { color: #00e676; }
+        .error { color: #ff1744; }
+    </style>
+</head>
+<body>
+    <div class="calculator">
+        <h1>🧮 Calculator</h1>
+        <h4>Featuring APIs for History, Memory & Plugins</h4>
+        
+        <input type="number" id="a" placeholder="Number A (or Base/Operand)" step="any">
+        <input type="number" id="b" placeholder="Number B (or Exponent)" step="any">
+        
+        <div class="button-grid">
+            <button onclick="calculate('add')">Add (+)</button>
+            <button onclick="calculate('subtract')">Subtract (-)</button>
+            <button onclick="calculate('multiply')">Multiply (×)</button>
+            <button onclick="calculate('divide')">Divide (÷)</button>
+            <button onclick="calculate('power')">Power (a^b)</button>
+            <button onclick="calculate('root')">Root (b-th of a)</button>
+            <button onclick="calculate('modulus')">Modulus (a % b)</button>
+            <button onclick="calculate('int_divide')">Int Divide (a // b)</button>
+            <button onclick="calculate('percent')">Percent (a of b)</button>
+            <button onclick="calculate('abs_diff')">Abs Diff |a-b|</button>
+        </div>
+
+        <div class="button-grid" style="margin-top: 20px; border-top: 1px solid #444; padding-top: 15px;">
+            <button class="adv-btn" onclick="executeAdvanced('POST', '/memory/store', {value: document.getElementById('a').value})">Store 'A' to Memory</button>
+            <button class="adv-btn" onclick="executeAdvanced('GET', '/memory/recall', null)">Recall Memory</button>
+            <button class="adv-btn" onclick="executeAdvanced('POST', '/undo', null)">Undo</button>
+            <button class="adv-btn" onclick="executeAdvanced('POST', '/redo', null)">Redo</button>
+            <button class="adv-btn" onclick="executeAdvanced('GET', '/history', null)">View History</button>
+            <button class="adv-btn" onclick="executeAdvanced('POST', '/history/clear', null)">Clear History</button>
+        </div>
+        
+        <div id="result-box">
+            <span id="result-text" style="color: #aaa;">Results and History will appear here...</span>
+        </div>
+    </div>
+    
+    <script>
+        const resultBox = document.getElementById('result-text');
+
+        async function calculate(operation) {
+            const a = document.getElementById('a').value || "0";
+            const b = document.getElementById('b').value || "0";
+            
+            resultBox.innerText = 'Calculating...';
+            resultBox.className = '';
+
+            try {
+                const response = await fetch('/' + operation, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ a: a, b: b })
+                });
+                
+                const data = await response.json();
+                updateResultBox(data);
+            } catch (err) {
+                resultBox.innerText = 'Network Error';
+                resultBox.className = 'error';
+            }
+        }
+
+        async function executeAdvanced(method, endpoint, bodyData) {
+            resultBox.innerText = 'Processing...';
+            resultBox.className = '';
+
+            const options = {
+                method: method,
+                headers: { 'Content-Type': 'application/json' }
+            };
+            if (bodyData) {
+                options.body = JSON.stringify(bodyData);
+            }
+
+            try {
+                const response = await fetch(endpoint, options);
+                const data = await response.json();
+                updateResultBox(data);
+            } catch (err) {
+                resultBox.innerText = 'Network Error';
+                resultBox.className = 'error';
+            }
+        }
+
+        function updateResultBox(data) {
+            if (data.error) {
+                resultBox.innerText = data.error;
+                resultBox.className = 'error';
+            } else {
+                resultBox.innerText = data.result;
+                resultBox.className = 'success';
+            }
+        }
+    </script>
+</body>
+</html>

@@ -89,7 +89,7 @@ class Calculator:
             # If it's a registered command, execute its handler
             try:
                 # Check if the command is an arithmetic command
-                if "<" in command_obj.usage:
+                if "<" in command_obj.usage and "[" not in command_obj.usage:
                     return self._handle_arithmetic_command(command_obj, parts)
                 else:
                     # Pass 'self' (the calculator instance) to the command handler
@@ -113,7 +113,7 @@ class Calculator:
             arithmetic_operation_name = parts[1]
             arithmetic_command_obj = command_manager.get_command(arithmetic_operation_name)
             
-            if arithmetic_command_obj and "<" in arithmetic_command_obj.usage:
+            if arithmetic_command_obj and ("<" in arithmetic_command_obj.usage and "[" not in arithmetic_command_obj.usage):
                 # Pass the actual operation and its operands (from parts[1] onwards)
                 return self._handle_arithmetic_command(arithmetic_command_obj, parts[1:])
             else:
