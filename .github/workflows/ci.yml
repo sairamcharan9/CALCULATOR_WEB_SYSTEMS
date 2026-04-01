@@ -1,10 +1,6 @@
-name: Python CI
+name: CI
 
-on:
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
+on: [push, pull_request]
 
 jobs:
   build:
@@ -12,14 +8,30 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
+
     - name: Set up Python
       uses: actions/setup-python@v2
       with:
-        python-version: '3.10'
+        python-version: '3.12'
+
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
         pip install -r requirements.txt
-    - name: Run tests with coverage
+        playwright install
+
+    - name: Run app in background for E2E
       run: |
-        pytest --cov=app --cov-fail-under=90
+        uvicorn main:app --host 0.0.0.0 --port 8000 &
+        sleep 5
+
+    - name: Run Shared Unit Tests (common logic)
+      run: pytest tests/unit -v
+
+    - name: Run CLI Tests
+      run: pytest tests/cli -v
+
+    - name: Run FastAPI Integration Tests (with 90% Coverage requirement)
+      run: pytest --cov=app.operations --cov=main --cov-fail-under=90 tests/unit tests/fastapi/integration
+
+    - name: Run FastAPI End-to-End Tests
+      run: TEST_URL=http://localhost:8000 pytest tests/fastapi/e2e

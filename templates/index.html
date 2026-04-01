@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FastAPI Web Calculator</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-gradient: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+            --glass-bg: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --text-main: #f0f0f0;
+            --text-muted: #aaa;
+            --btn-bg: rgba(255, 255, 255, 0.08);
+            --btn-hover: rgba(255, 255, 255, 0.15);
+            --btn-accent: rgba(0, 210, 255, 0.7);
+            --input-bg: rgba(0, 0, 0, 0.2);
+            --success: #00e676;
+            --error: #ff1744;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-gradient);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container-wrapper {
+            display: flex;
+            gap: 25px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .calculator, .drawer {
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 30px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        .calculator {
+            width: 480px;
+            text-align: center;
+        }
+
+        .drawer {
+            width: 320px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        h1 { margin-top: 0; margin-bottom: 5px; font-weight: 600; font-size: 28px; }
+        h4 { color: var(--text-muted); font-weight: 300; margin-top: 0; margin-bottom: 25px; }
+
+        input {
+            width: 100%;
+            padding: 15px;
+            margin: 10px 0;
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            background: var(--input-bg);
+            color: var(--text-main);
+            font-size: 18px;
+            font-family: 'Inter', sans-serif;
+            box-sizing: border-box;
+            outline: none;
+            transition: 0.2s;
+        }
+        input:focus {
+            border-color: var(--btn-accent);
+            box-shadow: 0 0 10px rgba(0, 210, 255, 0.2);
+        }
+
+        .button-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        button {
+            background: var(--btn-bg);
+            border: 1px solid var(--glass-border);
+            padding: 14px;
+            font-size: 15px;
+            border-radius: 10px;
+            color: var(--text-main);
+            cursor: pointer;
+            transition: 0.2s;
+            font-family: inherit;
+        }
+        button:hover { background: var(--btn-hover); transform: translateY(-2px); }
+        button:active { transform: translateY(0); }
+
+        .btn-primary { background: var(--btn-accent); color: #111; font-weight: 600; }
+        .btn-primary:hover { background: rgba(0, 210, 255, 0.9); }
+
+        .result-box {
+            margin-top: 25px;
+            padding: 20px;
+            border-radius: 12px;
+            background: var(--input-bg);
+            border: 1px solid var(--glass-border);
+            font-size: 24px;
+            min-height: 35px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            word-break: break-all;
+        }
+
+        .drawer h3 {
+            margin: 0; border-bottom: 1px solid var(--glass-border);
+            padding-bottom: 10px; color: #00d2ff;
+        }
+
+        .history-list {
+            display: flex; flex-direction: column; gap: 8px; font-size: 14px;
+            max-height: 250px; overflow-y: auto;
+        }
+        .history-item {
+            background: rgba(0,0,0,0.2); padding: 10px; border-radius: 8px; color: #ccc;
+        }
+
+        .success { color: var(--success); }
+        .error { color: var(--error); }
+    </style>
+</head>
+<body>
+
+    <div class="container-wrapper">
+        <!-- Main Calculator Form -->
+        <div class="calculator">
+            <h1>🧮 Calculator</h1>
+            <h4>Enter two numbers and select an operation</h4>
+            
+            <input type="number" id="a" placeholder="Number A (First operand)" step="any">
+            <input type="number" id="b" placeholder="Number B (Second operand)" step="any">
+            
+            <div class="button-grid">
+                <button onclick="calculate('add')">Add (+)</button>
+                <button onclick="calculate('subtract')">Subtract (-)</button>
+                <button onclick="calculate('multiply')">Multiply (×)</button>
+                <button onclick="calculate('divide')">Divide (÷)</button>
+                <button onclick="calculate('power')">Power (a^b)</button>
+                <button onclick="calculate('root')">Root (b-th of a)</button>
+                <button onclick="calculate('modulus')">Modulus (a % b)</button>
+                <button onclick="calculate('int_divide')">Int Divide (a // b)</button>
+                <button onclick="calculate('percent')">Percent (a of b)</button>
+                <button onclick="calculate('abs_diff')">Abs Diff |a-b|</button>
+            </div>
+            
+            <div class="result-box">
+                <span id="result-text" style="color: #666;">Result will appear here...</span>
+            </div>
+        </div>
+
+        <!-- Advanced Drawer -->
+        <div class="drawer">
+            <h3>Memory & Undo</h3>
+            <div class="button-grid" style="margin-top: 5px; grid-template-columns: 1fr;">
+                <button class="btn-primary" onclick="memStore()">Store 'A' to Memory</button>
+                <button onclick="memRecall()">Recall Memory</button>
+                <button onclick="executeAdvanced('POST', '/undo', null)">Undo Last</button>
+                <button onclick="executeAdvanced('POST', '/redo', null)">Redo Last</button>
+            </div>
+
+            <h3 style="margin-top: 15px;">Calculation History</h3>
+            <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                <button style="flex:1" onclick="fetchHistory()">Reload</button>
+                <button style="flex:1" onclick="clearServerHistory()">Clear</button>
+            </div>
+            
+            <div class="history-list" id="history-container">
+                <div class="history-item">History empty.</div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const resultBox = document.getElementById('result-text');
+
+        async function calculate(operation) {
+            const a = document.getElementById('a').value || "0";
+            const b = document.getElementById('b').value || "0";
+            
+            resultBox.innerText = 'Calculating...';
+            resultBox.className = '';
+
+            try {
+                const response = await fetch('/' + operation, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ a: a, b: b })
+                });
+                
+                const data = await response.json();
+                updateResultBox(data);
+                fetchHistory(); // background refresh
+            } catch (err) {
+                resultBox.innerText = 'Network Error';
+                resultBox.className = 'error';
+            }
+        }
+
+        async function executeAdvanced(method, endpoint, bodyData) {
+            resultBox.innerText = 'Processing...';
+            resultBox.className = '';
+
+            const options = {
+                method: method,
+                headers: { 'Content-Type': 'application/json' }
+            };
+            if (bodyData) {
+                options.body = JSON.stringify(bodyData);
+            }
+
+            try {
+                const response = await fetch(endpoint, options);
+                const data = await response.json();
+                updateResultBox(data);
+                fetchHistory();
+            } catch (err) {
+                resultBox.innerText = 'Network Error';
+                resultBox.className = 'error';
+            }
+        }
+
+        function updateResultBox(data) {
+            if (data.error) {
+                resultBox.innerText = `Error: ${data.error}`;
+                resultBox.className = 'error';
+            } else {
+                resultBox.innerText = data.result;
+                resultBox.className = 'success';
+            }
+        }
+
+        async function memStore() {
+            const val = document.getElementById('a').value || "0";
+            await executeAdvanced('POST', '/memory/store', {value: val});
+        }
+
+        async function memRecall() {
+            try {
+                const response = await fetch('/memory/recall');
+                const data = await response.json();
+                if (data.result && !data.result.includes("not found")) {
+                    document.getElementById('a').value = data.result;
+                    updateResultBox(data);
+                } else {
+                    updateResultBox({error: "No memory found"});
+                }
+            } catch(e) {
+                updateResultBox({error: "Network error"});
+            }
+        }
+
+        async function clearServerHistory() {
+            await executeAdvanced('POST', '/history/clear', null);
+            fetchHistory();
+        }
+
+        async function fetchHistory() {
+            try {
+                const res = await fetch('/history');
+                const data = await res.json();
+                const container = document.getElementById('history-container');
+                container.innerHTML = "";
+                
+                if (data.result && typeof data.result === "string" && data.result.includes("Calculation History")) {
+                    const lines = data.result.split('\n').filter(l => l.includes('=') || l.includes('Command:'));
+                    if (lines.length === 0) {
+                        container.innerHTML = "<div class='history-item'>No calculations yet.</div>";
+                        return;
+                    }
+                    lines.reverse().slice(0, 10).forEach(line => {
+                        const div = document.createElement('div');
+                        div.className = 'history-item';
+                        div.innerText = line.replace(/^\d+\.\s+/, '');
+                        container.appendChild(div);
+                    });
+                } else {
+                    container.innerHTML = "<div class='history-item'>History empty.</div>";
+                }
+            } catch(e) {}
+        }
+
+        // Init
+        fetchHistory();
+    </script>
+</body>
+</html>

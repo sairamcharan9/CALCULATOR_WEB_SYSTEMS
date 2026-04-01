@@ -5,3 +5,8 @@ pytest-cov>=6.0.0
 pytest-asyncio>=0.24.0
 Faker>=37.0.0
 colorama>=0.4.6
+fastapi
+uvicorn
+jinja2
+playwright
+httpx

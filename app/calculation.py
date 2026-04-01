@@ -128,7 +128,7 @@ class CalculationFactory:
             InvalidOperationError: If the requested operation name is not supported.
         """
         command = command_manager.get_command(operation_name)
-        if not command or "<" not in command.usage:  # Basic check for an arithmetic command
+        if not command or not ("<" in command.usage and "[" not in command.usage):  # Check for an arithmetic command
             raise InvalidOperationError(f"Unknown or non-arithmetic operation: '{operation_name}'")
         
         return Calculation(operand_a, operand_b, command.handler, operation_name, precision)
@@ -142,4 +142,4 @@ class CalculationFactory:
             list[str]: A list of strings, where each string is a supported operation name.
         """
         # Filter for commands that look like arithmetic operations
-        return [cmd.name for cmd in command_manager.get_all_commands() if "<" in cmd.usage]
+        return [cmd.name for cmd in command_manager.get_all_commands() if "<" in cmd.usage and "[" not in cmd.usage]
