@@ -7,7 +7,7 @@ Both interfaces share perfectly synced core mathematical logic, decoupled operat
 ## 🚀 Features
 
 - **Dual Interaction Modes**:
-  - `FastAPI Web Application`: A gorgeous Single Page Application (SPA) providing a physical-calculator aesthetic using vanilla HTML/CSS/JS.
+  - `FastAPI Web Application`: A gorgeous Single Page Application (SPA) providing a physical-calculator aesthetic using vanilla HTML/CSS/JS. 
   - `CLI REPL`: An interactive console application with robust error handling and command interpretation.
 - **Advanced Architecture**: Designed entirely using SOLID principles (Factory, Command, Facade, Memento, Observer patterns).
 - **Extensive Operations**: 10 built-in mathematical operations (Add, Subtract, Multiply, Divide, Int Divide, Power, Root, Modulus, Percent, Absolute Difference).
@@ -44,6 +44,8 @@ Both interfaces share perfectly synced core mathematical logic, decoupled operat
 
 For developers who want a fast, interactive terminal calculator, you can launch the CLI mode.
 
+![CLI Interface](screenshots/image%20copy.png)
+
 ### Start the CLI
 ```bash
 python main.py --cli
@@ -77,6 +79,8 @@ Goodbye!
 ## 🌐 Mode 2: FastAPI Web Application
 
 To use the calculator via a beautiful, browser-based graphical interface, simply run `main.py` without any arguments.
+
+![FastAPI Web Application](screenshots/image.png)
 
 ### Start the Server
 ```bash
