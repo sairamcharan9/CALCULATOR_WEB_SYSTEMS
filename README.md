@@ -1,224 +1,136 @@
-***NOTE:THIS REPO IS ALSO A TEST REPO FOR MY GIT SOFTWARE ENGINEER AGENT I AM WORKING ON SO THERE MAY BE MANY CHANGES WRT TO AGENT NAMED "FORGE" PLEASE IGNORE.***
+# Advanced Dual-Mode Calculator (FastAPI & CLI)
 
+This project is a professional-grade, dual-mode Calculator application built in Python. It features a complete **Command-Line Interface (REPL)** for terminal enthusiasts and a rich **FastAPI Web Server** with a stunning Glassmorphism frontend UI for browser interactions. 
 
+Both interfaces share perfectly synced core mathematical logic, decoupled operations using the Command Pattern, a unified calculation history via Pandas, and robust Undo/Redo/Memory implementations.
 
-<div align="center">
-  <h1>🧮 Advanced Calculator Application</h1>
-  <p><i>A beautifully styled, fully-featured command-line calculator built with Python.</i></p>
+## 🚀 Features
 
-  ![Python](https://img.shields.io/badge/Python-3.13+-blue.svg)
-  ![Coverage](https://img.shields.io/badge/Coverage-97%25-brightgreen.svg)
-  ![Design Patterns](https://img.shields.io/badge/Design_Patterns-Facade_|_Observer_|_Strategy_|_Memento-purple.svg)
-</div>
-
-<br />
-
-## 📋 Table of Contents
-
-- [📸 Showcase & REPL Demo](#-showcase--repl-demo)
-- [📖 Project Description](#-project-description)
-  - [🌟 Key Features](#-key-features)
-- [🚀 Installation & Setup](#-installation--setup)
-  - [1. Clone & Environment](#1-clone--environment)
-  - [2. Install Dependencies](#2-install-dependencies)
-  - [3. Usage](#3-usage)
-- [⚙️ Configuration](#️-configuration)
-- [🧪 Testing and Quality](#-testing-and-quality)
-  - [Running Tests](#running-tests)
-  - [GitHub Actions (CI)](#github-actions-ci)
-- [🤝 Contributing](#-contributing)
-- [📜 License](#-license)
-
-## 📸 Showcase & REPL Demo
-
-Experience our intuitive, color-coded REPL interface in action. The application features robust syntax highlighting for commands, success messages, operational status, and errors natively leveraging `colorama` for a seamless user experience!
-
-<div align="center">
-  <img src="screenshots/image%20copy.png" width="48%" />
-  <img src="screenshots/image%20copy%203.png" width="48%" />
-</div>
-
-<div align="center" style="margin-top: 10px;">
-  <img src="screenshots/image%20copy%202.png" width="98%" />
-</div>
-
-<div align="center" style="margin-top: 10px;">
-  <img src="screenshots/image%20copy%204.png" width="98%" />
-</div>
+- **Dual Interaction Modes**:
+  - `FastAPI Web Application`: A gorgeous Single Page Application (SPA) providing a physical-calculator aesthetic using vanilla HTML/CSS/JS.
+  - `CLI REPL`: An interactive console application with robust error handling and command interpretation.
+- **Advanced Architecture**: Designed entirely using SOLID principles (Factory, Command, Facade, Memento, Observer patterns).
+- **Extensive Operations**: 10 built-in mathematical operations (Add, Subtract, Multiply, Divide, Int Divide, Power, Root, Modulus, Percent, Absolute Difference).
+- **Persistent Memory & History**: Calculations are saved via a Pandas DataFrame (`data/history.csv`); memory states can be stored, recalled, and cleared reliably.
+- **Enterprise Testing**: Fully graded with 95%+ Coverage via Pytest. Features deeply parameterized Unit Tests for shared logic, CLI integration testing, and explicit End-to-End (E2E) Browser tests using Playwright.
+- **Continuous Integration**: GitHub Actions CI directly enforces testing and coverage rules against all modes.
+- **Containerized**: `Dockerfile` is provided for instant, isolated deployment.
 
 ---
 
-## 📖 Project Description
+## 🛠️ Installation & Setup
 
-This project is a sophisticated command-line calculator application built with Python, showcasing the integration of advanced software design patterns (Facade, Observer, Strategy, and Memento) to create a modular, extensible, and maintainable system. It moves beyond basic arithmetic to offer a rich feature set including persistent history, dynamic plugins, undo/redo functionality, and comprehensive logging, all configurable via environment variables.
+1. **Clone the repository**:
+   ```bash
+   git clone https://github.com/sairamcharan9/CALCULATOR_WEB_SYSTEMS.git
+   cd CALCULATOR_WEB_SYSTEMS
+   ```
 
-The core of the application is an interactive Read-Eval-Print Loop (REPL), providing a seamless user experience for performing calculations with full color-coded feedback!
+2. **Create a virtual environment**:
+   ```bash
+   python -m venv venv
+   source venv/bin/activate  # On Windows use: venv\Scripts\activate
+   ```
 
-### 🌟 Key Features
+3. **Install dependencies** (including Pytest and Playwright for tests):
+   ```bash
+   pip install -r requirements.txt
+   playwright install  # Required for running E2E UI Tests
+   ```
 
-- **🎨 Color-Coded Interface**: Intuitive feedback with Green results, Red errors, Blue history, and Magenta branding.
-- **⚡ Advanced Arithmetic**: Supports `add`, `subtract`, `multiply`, `divide`, `power`, `root`, `modulus`, `int_divide`, `percent`, and `abs_diff`.
-- **🔄 Undo/Redo System**: Full state management allowing you to revert or repeat any calculation actions.
-- **💾 Persistent History**: Seamlessly manages calculation history using `pandas`, with CSV save/load support.
-- **🛠️ Design Patterns Focused**: Implements clean architecture using Facade, Strategy, Observer, and Memento patterns.
-- **🧩 Dynamic Plugins**: Extensible command system allowing new features to be added as plugins.
-- **🛡️ Robust Validation**: Comprehensive input validation and custom exception handling for all operations.
-- **🧠 Memory Functionality**: The `memory` command stores, recalls, lists, and clears values for advanced multi-step calculations.
-- **📊 Detailed Logging**: Centralized logging system capturing all events and errors for auditability.
-- **🧪 Modular Testing**: High-coverage unit tests to ensure reliability and maintainability.
+---
 
-## 🚀 Installation & Setup
+## 💻 Mode 1: The Interactive CLI (REPL)
 
-### 1. Clone & Environment
+For developers who want a fast, interactive terminal calculator, you can launch the CLI mode.
+
+### Start the CLI
 ```bash
-git clone https://github.com/username/repository.git
-cd calculator-app
-python -m venv venv
-# Windows: venv\Scripts\activate | macOS/Linux: source venv/bin/activate
+python main.py --cli
 ```
 
-### 2. Install Dependencies
-```bash
-pip install -r requirements.txt
+### Example Usage:
+```text
+>>> calc add 10 5
+Result: 15.00
+
+>>> calc root 144 2
+Result: 12.00
+
+>>> memory store A 999
+Stored 999 into memory 'A'.
+
+>>> memory recall A
+Recalled A: 999
+
+>>> history
+=== Calculation History ===
+1. 10 + 5 = 15.00
+2. 144 √ 2 = 12.00
+
+>>> exit
+Goodbye!
 ```
 
-### 3. Usage
+---
+
+## 🌐 Mode 2: FastAPI Web Application
+
+To use the calculator via a beautiful, browser-based graphical interface, simply run `main.py` without any arguments.
+
+### Start the Server
 ```bash
 python main.py
 ```
 
----
+### Accessing the API & GUI
+- **Application GUI**: Open [http://127.0.0.1:8000/](http://127.0.0.1:8000/) in your favorite browser.
+- **Swagger Documentation**: View the auto-generated API specifications at [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs).
 
-## 📚 All Available Commands
-
-The application supports a rich set of arithmetic and special commands.
-
-### Arithmetic Commands
-
-These commands perform standard calculations and require two numbers.
-
-| Command      | Description                                                    | Usage Example         |
-| :----------- | :------------------------------------------------------------- | :-------------------- |
-| `add`        | Returns the sum of two Decimal numbers.                        | `add 10 5`            |
-| `subtract`   | Returns the difference between two Decimal numbers.            | `subtract 10 5`       |
-| `multiply`   | Returns the product of two Decimal numbers.                    | `multiply 10 5`       |
-| `divide`     | Returns the quotient of two Decimal numbers.                   | `divide 10 5`         |
-| `power`      | Returns the base `a` raised to the power of `b`.               | `power 2 3`           |
-| `root`       | Calculates the `b`-th root of `a`.                             | `root 27 3`           |
-| `modulus`    | Returns the remainder of the division of `a` by `b`.           | `modulus 10 3`        |
-| `int_divide` | Returns the integer part of the quotient of `a` divided by `b`. | `int_divide 10 3`     |
-| `percent`    | Calculates what percentage `a` is of `b`.                      | `percent 50 200`      |
-| `abs_diff`   | Returns the absolute difference between `a` and `b`.           | `abs_diff 5 10`       |
-
-### Special Commands
-
-These commands handle application-level actions like history management, help, and state manipulation.
-
-| Command        | Description                                  | Usage Example   |
-| :------------- | :------------------------------------------- | :-------------- |
-| `greet`        | Displays a welcome message.                  | `greet`         |
-| `help` or `?`  | Shows a detailed list of all commands.       | `help`          |
-| `history`      | Displays the calculation history.            | `history`       |
-| `clear`        | Clears the entire calculation history.       | `clear`         |
-| `undo`         | Reverts the last calculation or action.      | `undo`          |
-| `redo`         | Re-applies the last undone action.           | `redo`          |
-| `save`         | Manually saves the history to a CSV file.    | `save`          |
-| `load`         | Manually loads the history from a CSV file.  | `load`          |
-| `exit` or `quit` | Exits the calculator application.          | `exit`          |
-
----
-
-## 🖥️ REPL Usage Examples
-
-Here is a sample session demonstrating common interactions:
-
-```
-> greet
-Hello! Welcome to the calculator.
-> add 25 17
-Result: 42.00
-> power 2 8
-Result: 256.00
-> history
-=== Calculation History ===
-  1. 25 add 17 = 42.00
-  2. 2 power 8 = 256.00
-
-Total: 2 calculation(s)
-> undo
-Undo successful. History now contains 1 calculation(s).
-> history
-=== Calculation History ===
-  1. 25 add 17 = 42.00
-
-Total: 1 calculation(s)
-> exit
-Exiting the calculator. Goodbye!
-```
-
-## ⚙️ Configuration
-
-Customize the application via the `.env` file:
-
-```env
-CALCULATOR_HISTORY_DIR=data
-CALCULATOR_AUTO_SAVE=true
-CALCULATOR_LOG_DIR=logs
-CALCULATOR_LOG_FILE=app.log
-CALCULATOR_PRECISION=2
-CALCULATOR_MAX_INPUT_VALUE=1e12
-```
-
----
-
-## 🔮 Future Enhancements
-
-We are continuously working to improve the calculator application. Some of the planned future enhancements include:
-
-- **Plugin System**: Allow users to easily create and integrate custom command plugins.
-- **GUI Interface**: Develop a graphical user interface for a more visual interaction.
-- **Advanced Functions**: Implement more complex mathematical and scientific functions.
-
----
-
-## 🧪 Testing and Quality
-
-We maintain high code quality standards through comprehensive testing and CI/CD integration.
-
-### Running Tests
-To execute the test suite and check coverage:
+### API Endpoint Examples
+You can interface directly with the FastAPI backend without using the GUI:
 ```bash
-pytest --cov=app --cov-report=term-missing --cov-fail-under=90
+# Add two numbers
+curl -X POST http://127.0.0.1:8000/add -H "Content-Type: application/json" -d '{"a":"10","b":"5"}'
+
+# View History
+curl http://127.0.0.1:8000/history
 ```
 
-### GitHub Actions (CI)
-Our automated workflow handles:
-- ✅ Dependency installation
-- ✅ Code linting and standards
-- ✅ Cross-platform test execution
-- ✅ Coverage threshold enforcement
+---
+
+## 🧪 Testing and Coverage
+
+This project strictly maintains over 90% code coverage. 
+
+### Running Tests Locally
+```bash
+# Run exclusively the shared core / unit tests
+pytest tests/unit -v
+
+# Run exclusively CLI interface tests
+pytest tests/cli -v
+
+# Run strictly the FastAPI Integration & E2E framework
+pytest tests/fastapi -v
+
+# Run the complete unified test suite with Coverage Report
+pytest --cov=app --cov=main --cov-fail-under=90 tests/
+```
+
+> **Note**: The E2E tests require the FastAPI server to be running in a background terminal `python main.py` or they will "Connection Refused". They use Playwright to simulate button clicks natively.
 
 ---
 
-## 🤝 Contributing
+## 🐳 Docker Deployment
 
-Contributions are welcome! If you'd like to help improve the application, please follow these steps:
+To launch the Web Application independently via Docker ensuring pristine cross-compatibility:
 
-1.  **Fork the repository** on GitHub.
-2.  **Clone your fork** to your local machine.
-3.  **Create a new branch** for your feature or bug fix.
-4.  **Make your changes** and commit them with clear messages.
-5.  **Push your branch** to your fork on GitHub.
-6.  **Submit a pull request** to the main repository.
-
----
-
-## 📜 License
-
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+```bash
+docker build -t fast-calculator .
+docker run -p 8000:8000 fast-calculator
+```
+Then navigate horizontally to `http://localhost:8000`.
 
 ---
-
-<div align="center">
-  <p>Developed with ❤️ for Advanced Software Development</p>
-</div>
+*Created as a Midterm Submission demonstrating Enterprise Python architectural principles.*
