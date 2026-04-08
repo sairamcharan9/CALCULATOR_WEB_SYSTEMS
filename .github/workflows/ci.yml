@@ -78,5 +78,5 @@ jobs:
         context: .
         push: true
         tags: |
-          ${{ secrets.DOCKERHUB_USERNAME }}/calculator-web-systems:latest
-          ${{ secrets.DOCKERHUB_USERNAME }}/calculator-web-systems:${{ github.sha }}
+          sb2853/calculator-web-systems:latest
+          sb2853/calculator-web-systems:${{ github.sha }}
