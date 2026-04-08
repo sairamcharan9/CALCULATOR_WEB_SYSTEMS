@@ -128,6 +128,16 @@ curl -X POST http://127.0.0.1:8000/users/ \
 
 ---
 
+## 💾 Calculation Data Modeling
+
+This module implements the database backend for saving user calculations:
+- **SQLAlchemy Structure**: A `Calculation` model handles state persistence with fields for `a`, `b`, `type`, and `result`.
+- **Foreign Keys**: Securely binds every calculation to a specific `user_id` inside the database.
+- **Factory Pattern**: The `CalculationModelFactory` securely and consistently intercepts raw operations to compute results before creating the SQLAlchemy instance.
+- **Pydantic Validation**: Uses the `@model_validator` paradigm to aggressively intercept and ban any mathematical request attempting to divide by zero before the database is ever reached.
+
+---
+
 ## 🧪 Testing and Coverage
 
 This project maintains **92%+ code coverage** across 200+ automated tests.
