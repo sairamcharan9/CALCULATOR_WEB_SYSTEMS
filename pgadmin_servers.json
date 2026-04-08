@@ -1,0 +1,15 @@
+{
+    "Servers": {
+        "1": {
+            "Name": "FastAPI DB",
+            "Group": "Servers",
+            "Host": "db",
+            "Port": 5432,
+            "MaintenanceDB": "fastapi_db",
+            "Username": "postgres",
+            "Password": "postgres",
+            "SSLMode": "prefer",
+            "SavePassword": true
+        }
+    }
+}
