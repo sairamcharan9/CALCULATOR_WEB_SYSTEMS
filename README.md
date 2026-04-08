@@ -134,17 +134,17 @@ This project maintains **92%+ code coverage** across 200+ automated tests.
 
 ### Running Tests Locally
 ```bash
-# Run all unit tests (core logic + security + schemas + model)
+# Run all unit tests (core logic + security + schemas + models)
 pytest tests/unit -v
 
 # Run CLI interface tests
 pytest tests/cli -v
 
-# Run FastAPI integration tests (User API + Calculator API)
+# Run FastAPI integration tests (Calculator API, Users, Calculation DB)
 pytest tests/fastapi/integration -v
 
-# Run only the new user-related tests
-pytest tests/unit/test_security.py tests/unit/test_schemas.py tests/unit/test_user_model.py tests/fastapi/integration/test_user_api.py -v
+# Run only the user and calculation model tests
+pytest tests/unit/test_security.py tests/unit/test_schemas.py tests/unit/test_user_model.py tests/unit/test_calculation_model.py tests/fastapi/integration/test_user_api.py tests/fastapi/integration/test_calculation_db.py -v
 
 # Run the complete unified test suite with Coverage Report
 pytest --cov=app --cov=main --cov-report=term-missing tests/

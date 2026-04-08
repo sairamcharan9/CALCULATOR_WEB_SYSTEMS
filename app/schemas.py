@@ -40,3 +40,47 @@ class UserRead(BaseModel):
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+
+from enum import Enum
+from pydantic import model_validator
+
+
+class OperationType(str, Enum):
+    ADD = "ADD"
+    SUBTRACT = "SUBTRACT"
+    MULTIPLY = "MULTIPLY"
+    DIVIDE = "DIVIDE"
+    INT_DIVIDE = "INT_DIVIDE"
+
+
+class CalculationCreate(BaseModel):
+    """
+    Schema for validating incoming calculation requests.
+    Validates operand types, operation type enum, and division by zero.
+    """
+    a: float
+    b: float
+    type: OperationType
+
+    @model_validator(mode='after')
+    def check_division_by_zero(self):
+        # self is the instantiated model 
+        if self.type in (OperationType.DIVIDE, OperationType.INT_DIVIDE) and self.b == 0:
+            raise ValueError("Cannot divide by zero")
+        return self
+
+
+class CalculationRead(BaseModel):
+    """
+    Schema for returning calculation records in API responses.
+    """
+    id: int
+    a: float
+    b: float
+    type: str
+    result: float
+    user_id: int
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
