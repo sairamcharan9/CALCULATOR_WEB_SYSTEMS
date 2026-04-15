@@ -1,4 +1,12 @@
 logs/
+data/
 venv/
 __pycache__/
 .pytest_cache/
+*.db
+.env
+.coverage
+_test_err.txt
+.git/
+.github/
+screenshots/

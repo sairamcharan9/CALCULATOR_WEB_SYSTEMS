@@ -73,3 +73,15 @@ Thumbs.db
 # Project specific
 *.log
 history.csv
+
+# Database files
+*.db
+test.db
+
+# Runtime data & logs
+data/
+logs/
+
+# Temporary test output
+_test_err.txt
+tracked_files.txt
