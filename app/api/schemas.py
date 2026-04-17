@@ -7,6 +7,7 @@ Defines request/response schemas for User and Calculation operations.
 
 from datetime import datetime
 from enum import Enum
+from typing import Optional
 
 from pydantic import BaseModel, ConfigDict, EmailStr, model_validator
 
@@ -87,6 +88,21 @@ class CalculationUpdate(BaseModel):
     @model_validator(mode='after')
     def check_division_by_zero(self):
         if self.type in (OperationType.DIVIDE, OperationType.INT_DIVIDE) and self.b == 0:
+            raise ValueError("Cannot divide by zero")
+        return self
+
+
+class CalculationPatch(BaseModel):
+    """HTTP request body for PATCH /calculations/{id} — all fields optional."""
+    a: Optional[float] = None
+    b: Optional[float] = None
+    type: Optional[OperationType] = None
+
+    @model_validator(mode='after')
+    def check_division_by_zero(self):
+        op = self.type
+        b = self.b
+        if op in (OperationType.DIVIDE, OperationType.INT_DIVIDE) and b == 0:
             raise ValueError("Cannot divide by zero")
         return self
 

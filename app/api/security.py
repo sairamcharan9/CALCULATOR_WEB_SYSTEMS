@@ -3,14 +3,18 @@ Password Security & JWT
 =======================
 
 Provides password hashing/verification using bcrypt via passlib,
-and JWT creation/decoding using python-jose.
+JWT creation/decoding using python-jose, and a FastAPI dependency
+for extracting the currently authenticated user from the Bearer token.
 """
 
 import os
 from datetime import datetime, timedelta, timezone
 
+from fastapi import Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 from passlib.context import CryptContext
+from sqlalchemy.orm import Session
 
 # ── bcrypt config ──────────────────────────────────────────────────────────
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -62,3 +66,70 @@ def decode_access_token(token: str) -> dict:
         JWTError: If the token is invalid or expired.
     """
     return jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+
+
+# ── OAuth2 Scheme ─────────────────────────────────────────────────────────
+# tokenUrl points to the login endpoint that issues JWT tokens.
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/users/login", auto_error=False)
+
+
+def get_current_user(
+    token: str = Depends(oauth2_scheme),
+    db: Session = Depends(lambda: None),   # placeholder — real import below
+):
+    """Placeholder overridden at module level below."""
+    ...  # pragma: no cover
+
+
+def _build_get_current_user():
+    """
+    Returns the real get_current_user dependency as a closure.
+    Defined as a factory to avoid circular imports at import time
+    (security.py must not import models.py or database.py at the top level).
+    """
+    from app.api.database import get_db
+    from app.api.models import User
+
+    def _get_current_user(
+        token: str = Depends(oauth2_scheme),
+        db: Session = Depends(get_db),
+    ):
+        """
+        FastAPI dependency — decodes the Bearer JWT and returns the User ORM object.
+
+        Raises 401 if:
+        - No token is present.
+        - Token signature is invalid or expired.
+        - The user referenced by 'sub' no longer exists in the database.
+        """
+        credentials_exception = HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated. Please log in.",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+        if token is None:
+            raise credentials_exception
+
+        try:
+            payload = decode_access_token(token)
+            user_id_str: str = payload.get("sub")
+            if user_id_str is None:
+                raise credentials_exception
+            user_id = int(user_id_str)
+        except (JWTError, ValueError):
+            raise credentials_exception
+
+        user = db.query(User).filter(User.id == user_id).first()
+        if user is None:
+            raise credentials_exception
+
+        return user
+
+    return _get_current_user
+
+
+# Replace the placeholder with the real implementation.
+# Routes import this symbol; the factory pattern avoids circular imports
+# while still letting FastAPI propagate DB session overrides through Depends.
+get_current_user = _build_get_current_user()

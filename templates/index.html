@@ -3,304 +3,864 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FastAPI Web Calculator</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <title>FastAPI Web Calculator — BREAD Dashboard</title>
+    <meta name="description" content="Advanced Web Calculator with persistent calculation history, Browse, Read, Edit, Add and Delete operations.">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
             --bg-gradient: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
             --glass-bg: rgba(255, 255, 255, 0.05);
             --glass-border: rgba(255, 255, 255, 0.1);
             --text-main: #f0f0f0;
-            --text-muted: #aaa;
-            --btn-bg: rgba(255, 255, 255, 0.08);
-            --btn-hover: rgba(255, 255, 255, 0.15);
-            --btn-accent: rgba(0, 210, 255, 0.7);
-            --input-bg: rgba(0, 0, 0, 0.2);
+            --text-muted: #9aa5b4;
+            --btn-accent: #00d2ff;
+            --btn-accent-dark: #0097b2;
+            --input-bg: rgba(0, 0, 0, 0.25);
             --success: #00e676;
-            --error: #ff1744;
+            --error: #ff4d6d;
+            --warning: #ffb74d;
         }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {
             font-family: 'Inter', sans-serif;
             background: var(--bg-gradient);
+            background-attachment: fixed;
             color: var(--text-main);
             min-height: 100vh;
+        }
+
+        /* ── Nav ── */
+        .navbar {
             display: flex;
-            justify-content: center;
             align-items: center;
-            margin: 0;
-            padding: 20px;
+            justify-content: space-between;
+            padding: 18px 32px;
+            background: rgba(0,0,0,0.3);
+            border-bottom: 1px solid var(--glass-border);
+            backdrop-filter: blur(12px);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .navbar-brand { font-size: 20px; font-weight: 700; letter-spacing: -0.3px; }
+        .navbar-brand span { color: var(--btn-accent); }
+        .navbar-right { display: flex; align-items: center; gap: 14px; font-size: 14px; }
+        .nav-user { color: var(--text-muted); }
+        .nav-user strong { color: var(--text-main); }
+        .btn-nav {
+            padding: 8px 16px;
+            border-radius: 8px;
+            border: 1px solid var(--glass-border);
+            background: var(--glass-bg);
+            color: var(--text-main);
+            font-size: 13px;
+            font-family: inherit;
+            cursor: pointer;
+            text-decoration: none;
+            transition: background 0.2s;
+        }
+        .btn-nav:hover { background: rgba(255,255,255,0.1); }
+        .btn-nav-accent {
+            background: linear-gradient(135deg, var(--btn-accent), var(--btn-accent-dark));
+            color: #0a1628;
+            font-weight: 600;
+            border: none;
+        }
+        .btn-nav-accent:hover { opacity: 0.9; }
+        #nav-auth-section { display: flex; align-items: center; gap: 10px; }
+
+        /* ── Layout ── */
+        .page-wrapper {
+            max-width: 1300px;
+            margin: 0 auto;
+            padding: 32px 24px 60px;
+            display: grid;
+            grid-template-columns: 460px 1fr;
+            gap: 28px;
         }
 
-        .container-wrapper {
-            display: flex;
-            gap: 25px;
-            flex-wrap: wrap;
-            justify-content: center;
+        @media (max-width: 900px) {
+            .page-wrapper { grid-template-columns: 1fr; }
         }
 
-        .calculator, .drawer {
+        /* ── Cards ── */
+        .card {
             background: var(--glass-bg);
             backdrop-filter: blur(16px);
             -webkit-backdrop-filter: blur(16px);
             border: 1px solid var(--glass-border);
             border-radius: 24px;
-            padding: 30px;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            padding: 28px;
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
         }
 
-        .calculator {
-            width: 480px;
-            text-align: center;
-        }
-
-        .drawer {
-            width: 320px;
+        .card-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 20px;
             display: flex;
-            flex-direction: column;
-            gap: 15px;
+            align-items: center;
+            gap: 8px;
+            border-bottom: 1px solid var(--glass-border);
+            padding-bottom: 14px;
+        }
+        .card-title .emoji { font-size: 20px; }
+
+        /* ── Inputs ── */
+        label {
+            display: block;
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
         }
 
-        h1 { margin-top: 0; margin-bottom: 5px; font-weight: 600; font-size: 28px; }
-        h4 { color: var(--text-muted); font-weight: 300; margin-top: 0; margin-bottom: 25px; }
-
-        input {
+        input, select {
             width: 100%;
-            padding: 15px;
-            margin: 10px 0;
+            padding: 12px 14px;
             border: 1px solid var(--glass-border);
-            border-radius: 12px;
+            border-radius: 10px;
             background: var(--input-bg);
             color: var(--text-main);
-            font-size: 18px;
+            font-size: 15px;
             font-family: 'Inter', sans-serif;
-            box-sizing: border-box;
             outline: none;
-            transition: 0.2s;
+            transition: border-color 0.2s, box-shadow 0.2s;
         }
-        input:focus {
+        input:focus, select:focus {
             border-color: var(--btn-accent);
-            box-shadow: 0 0 10px rgba(0, 210, 255, 0.2);
+            box-shadow: 0 0 0 3px rgba(0,210,255,0.12);
         }
+        select option { background: #1a2a35; }
 
-        .button-grid {
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px; }
+        .form-group { margin-bottom: 14px; }
+
+        /* ── Buttons ── */
+        .btn {
+            padding: 10px 18px;
+            border-radius: 10px;
+            border: 1px solid var(--glass-border);
+            background: var(--glass-bg);
+            color: var(--text-main);
+            font-size: 14px;
+            font-family: inherit;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.15s;
+        }
+        .btn:hover { background: rgba(255,255,255,0.1); transform: translateY(-1px); }
+        .btn:active { transform: translateY(0); }
+        .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--btn-accent), var(--btn-accent-dark));
+            color: #0a1628;
+            font-weight: 700;
+            border: none;
+        }
+        .btn-primary:hover { opacity: 0.9; }
+
+        .btn-success { background: rgba(0,230,118,0.15); border-color: rgba(0,230,118,0.3); color: var(--success); }
+        .btn-danger  { background: rgba(255,77,109,0.12); border-color: rgba(255,77,109,0.3); color: var(--error); }
+        .btn-warning { background: rgba(255,183,77,0.12); border-color: rgba(255,183,77,0.3); color: var(--warning); }
+        .btn-sm { padding: 6px 12px; font-size: 12px; border-radius: 7px; }
+
+        /* ── Operation Grid ── */
+        .op-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: 12px;
-            margin-top: 20px;
+            gap: 10px;
+            margin-bottom: 18px;
         }
-
-        button {
-            background: var(--btn-bg);
-            border: 1px solid var(--glass-border);
-            padding: 14px;
-            font-size: 15px;
+        .op-btn {
+            padding: 12px 8px;
+            font-size: 13px;
             border-radius: 10px;
+            border: 1px solid var(--glass-border);
+            background: var(--glass-bg);
             color: var(--text-main);
             cursor: pointer;
             transition: 0.2s;
             font-family: inherit;
         }
-        button:hover { background: var(--btn-hover); transform: translateY(-2px); }
-        button:active { transform: translateY(0); }
+        .op-btn:hover { background: rgba(255,255,255,0.1); transform: translateY(-1px); }
+        .op-btn.active { background: rgba(0,210,255,0.15); border-color: rgba(0,210,255,0.5); color: var(--btn-accent); }
 
-        .btn-primary { background: var(--btn-accent); color: #111; font-weight: 600; }
-        .btn-primary:hover { background: rgba(0, 210, 255, 0.9); }
-
+        /* ── Result Box ── */
         .result-box {
-            margin-top: 25px;
-            padding: 20px;
+            margin-top: 10px;
+            padding: 18px;
             border-radius: 12px;
             background: var(--input-bg);
             border: 1px solid var(--glass-border);
-            font-size: 24px;
-            min-height: 35px;
+            min-height: 60px;
             display: flex;
             align-items: center;
-            justify-content: center;
-            word-break: break-all;
+            justify-content: space-between;
+            gap: 12px;
         }
-
-        .drawer h3 {
-            margin: 0; border-bottom: 1px solid var(--glass-border);
-            padding-bottom: 10px; color: #00d2ff;
-        }
-
-        .history-list {
-            display: flex; flex-direction: column; gap: 8px; font-size: 14px;
-            max-height: 250px; overflow-y: auto;
-        }
-        .history-item {
-            background: rgba(0,0,0,0.2); padding: 10px; border-radius: 8px; color: #ccc;
-        }
-
+        #result-text { font-size: 22px; font-weight: 600; word-break: break-all; }
         .success { color: var(--success) !important; }
-        .error { color: var(--error) !important; }
-        .muted { color: #666; }
+        .error   { color: var(--error) !important; }
+        .muted   { color: #666; font-size: 16px !important; font-weight: 400 !important; }
+
+        /* ── Calculations Table ── */
+        .calc-table-wrap { overflow-x: auto; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+        th {
+            padding: 10px 14px;
+            text-align: left;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            border-bottom: 1px solid var(--glass-border);
+        }
+        td {
+            padding: 12px 14px;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+            transition: background 0.15s;
+        }
+        tr:hover td { background: rgba(255,255,255,0.03); }
+        .type-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 5px;
+            font-size: 11px;
+            font-weight: 600;
+            background: rgba(0,210,255,0.12);
+            color: var(--btn-accent);
+        }
+        .result-val { font-weight: 600; color: var(--success); }
+        .actions-cell { display: flex; gap: 6px; }
+        .empty-state { padding: 40px; text-align: center; color: var(--text-muted); font-size: 14px; }
+
+        /* ── Memory & History ── */
+        .memory-section { display: flex; flex-direction: column; gap: 10px; margin-bottom: 18px; }
+        .memory-btns { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 8px; }
+        .history-list { display: flex; flex-direction: column; gap: 6px; max-height: 180px; overflow-y: auto; }
+        .history-item { background: rgba(0,0,0,0.2); padding: 8px 12px; border-radius: 8px; color: #ccc; font-size: 13px; }
+
+        /* ── Auth banner ── */
+        .auth-banner {
+            padding: 20px;
+            background: rgba(255,183,77,0.08);
+            border: 1px solid rgba(255,183,77,0.25);
+            border-radius: 12px;
+            color: var(--warning);
+            font-size: 14px;
+            text-align: center;
+            margin-bottom: 16px;
+        }
+        .auth-banner a { color: var(--btn-accent); font-weight: 600; text-decoration: none; }
+
+        /* ── Modal ── */
+        .modal-overlay {
+            position: fixed; inset: 0;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(4px);
+            z-index: 500;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-overlay.open { display: flex; }
+        .modal {
+            background: #1a2d3a;
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 32px;
+            width: 100%;
+            max-width: 420px;
+            box-shadow: 0 40px 80px rgba(0,0,0,0.6);
+            animation: slideUp 0.3s cubic-bezier(0.16,1,0.3,1);
+        }
+        @keyframes slideUp {
+            from { opacity:0; transform:translateY(20px); }
+            to   { opacity:1; transform:translateY(0); }
+        }
+        .modal-title { font-size: 18px; font-weight: 700; margin-bottom: 22px; }
+        .modal-footer { display: flex; gap: 10px; margin-top: 22px; justify-content: flex-end; }
+
+        /* ── Toast ── */
+        .toast {
+            position: fixed;
+            bottom: 28px; right: 28px;
+            padding: 14px 20px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 500;
+            z-index: 1000;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: opacity 0.3s, transform 0.3s;
+            pointer-events: none;
+            max-width: 340px;
+        }
+        .toast.show { opacity: 1; transform: translateY(0); }
+        .toast-success { background: rgba(0,230,118,0.15); border: 1px solid rgba(0,230,118,0.35); color: var(--success); }
+        .toast-error   { background: rgba(255,77,109,0.15); border: 1px solid rgba(255,77,109,0.35); color: var(--error); }
+
+        /* Spinner */
+        .spinner {
+            display: inline-block; width:14px; height:14px;
+            border: 2px solid rgba(10,22,40,0.3);
+            border-top-color: #0a1628;
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+            vertical-align: middle;
+            margin-right: 5px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Validation error */
+        .field-error { font-size: 12px; color: var(--error); margin-top: 4px; display: none; }
+        .field-error.visible { display: block; }
+        input.invalid { border-color: var(--error); }
     </style>
 </head>
 <body>
 
-    <div class="container-wrapper">
-        <!-- Main Calculator Form -->
-        <div class="calculator">
-            <h1>🧮 Calculator</h1>
-            <h4>Enter two numbers and select an operation</h4>
-            
-            <input type="number" id="a" placeholder="Number A (First operand)" step="any">
-            <input type="number" id="b" placeholder="Number B (Second operand)" step="any">
-            
-            <div class="button-grid">
-                <button onclick="calculate('add')">Add (+)</button>
-                <button onclick="calculate('subtract')">Subtract (-)</button>
-                <button onclick="calculate('multiply')">Multiply (×)</button>
-                <button onclick="calculate('divide')">Divide (÷)</button>
-                <button onclick="calculate('power')">Power (a^b)</button>
-                <button onclick="calculate('root')">Root (b-th of a)</button>
-                <button onclick="calculate('modulus')">Modulus (a % b)</button>
-                <button onclick="calculate('int_divide')">Int Divide (a // b)</button>
-                <button onclick="calculate('percent')">Percent (a of b)</button>
-                <button onclick="calculate('abs_diff')">Abs Diff |a-b|</button>
+<!-- ── Navbar ── -->
+<nav class="navbar">
+    <div class="navbar-brand">🧮 <span>Calc</span>BREAD</div>
+    <div id="nav-auth-section" class="navbar-right">
+        <span class="nav-user" id="nav-username-display" style="display:none">
+            Logged in as <strong id="nav-username-text"></strong>
+        </span>
+        <a href="/login" class="btn-nav btn-nav-accent" id="nav-login-btn">Sign In</a>
+        <button class="btn-nav" id="nav-logout-btn" style="display:none" onclick="handleLogout()">Log Out</button>
+    </div>
+</nav>
+
+<!-- ── Main Layout ── -->
+<div class="page-wrapper">
+
+    <!-- LEFT: Calculator Panel -->
+    <div style="display:flex; flex-direction:column; gap:24px;">
+
+        <!-- Arithmetic Calculator -->
+        <div class="card">
+            <div class="card-title"><span class="emoji">🔢</span> Calculator</div>
+
+            <div class="form-row">
+                <div class="form-group" style="margin:0">
+                    <label for="a">Number A</label>
+                    <input type="number" id="a" placeholder="e.g. 10" step="any" aria-label="First operand">
+                </div>
+                <div class="form-group" style="margin:0">
+                    <label for="b">Number B</label>
+                    <input type="number" id="b" placeholder="e.g. 5" step="any" aria-label="Second operand">
+                </div>
             </div>
-            
+
+            <div class="op-grid">
+                <button class="op-btn" id="op-add"        onclick="calculate('add',      this)">Add (+)</button>
+                <button class="op-btn" id="op-subtract"   onclick="calculate('subtract', this)">Subtract (−)</button>
+                <button class="op-btn" id="op-multiply"   onclick="calculate('multiply', this)">Multiply (×)</button>
+                <button class="op-btn" id="op-divide"     onclick="calculate('divide',   this)">Divide (÷)</button>
+                <button class="op-btn" id="op-power"      onclick="calculate('power',    this)">Power (a^b)</button>
+                <button class="op-btn" id="op-root"       onclick="calculate('root',     this)">Root (b-th of a)</button>
+                <button class="op-btn" id="op-modulus"    onclick="calculate('modulus',  this)">Modulus (a % b)</button>
+                <button class="op-btn" id="op-int_divide" onclick="calculate('int_divide',this)">Int Divide (a // b)</button>
+                <button class="op-btn" id="op-percent"    onclick="calculate('percent',  this)">Percent (a of b)</button>
+                <button class="op-btn" id="op-abs_diff"   onclick="calculate('abs_diff', this)">Abs Diff |a−b|</button>
+            </div>
+
             <div class="result-box">
-                <span id="result-text" class="muted">Result will appear here...</span>
+                <span id="result-text" class="muted">Result will appear here…</span>
+                <button class="btn btn-success btn-sm" id="save-btn" onclick="saveCalculation()" style="display:none; white-space:nowrap" id="save-calculation-btn">
+                    💾 Save to DB
+                </button>
             </div>
+            <div id="save-error" class="field-error" style="margin-top:8px"></div>
         </div>
 
-        <!-- Advanced Drawer -->
-        <div class="drawer">
-            <h3>Memory & Undo</h3>
-            <div class="button-grid" style="margin-top: 5px; grid-template-columns: 1fr;">
-                <button class="btn-primary" onclick="memStore()">Store 'A' to Memory</button>
-                <button onclick="memRecall()">Recall Memory</button>
-                <button onclick="executeAdvanced('POST', '/undo', null)">Undo Last</button>
-                <button onclick="executeAdvanced('POST', '/redo', null)">Redo Last</button>
+        <!-- Memory & Quick History -->
+        <div class="card">
+            <div class="card-title"><span class="emoji">🧠</span> Memory & Quick History</div>
+            <div class="memory-btns">
+                <button class="btn btn-sm" onclick="memStore()">Store A</button>
+                <button class="btn btn-sm" onclick="memRecall()">Recall</button>
+                <button class="btn btn-sm" onclick="execAdvanced('POST','/undo',null)">Undo</button>
+                <button class="btn btn-sm" onclick="execAdvanced('POST','/redo',null)">Redo</button>
             </div>
-
-            <h3 style="margin-top: 15px;">Calculation History</h3>
-            <div style="display: flex; gap: 10px; margin-bottom: 10px;">
-                <button style="flex:1" onclick="fetchHistory()">Reload</button>
-                <button style="flex:1" onclick="clearServerHistory()">Clear</button>
+            <div style="display:flex; gap:8px; margin:12px 0 10px;">
+                <button class="btn btn-sm" style="flex:1" onclick="fetchHistory()">🔄 Reload</button>
+                <button class="btn btn-sm btn-danger" style="flex:1" onclick="clearServerHistory()">🗑 Clear</button>
             </div>
-            
             <div class="history-list" id="history-container">
                 <div class="history-item">History empty.</div>
             </div>
         </div>
     </div>
-    
-    <script>
-        const resultBox = document.getElementById('result-text');
 
-        async function calculate(operation) {
-            const a = document.getElementById('a').value || "0";
-            const b = document.getElementById('b').value || "0";
-            
-            resultBox.innerText = 'Calculating...';
-            resultBox.className = '';
+    <!-- RIGHT: BREAD Dashboard -->
+    <div class="card" style="align-self:start">
+        <div class="card-title"><span class="emoji">📊</span> My Calculations <span style="font-size:12px; color:var(--text-muted); font-weight:400; margin-left:auto" id="calc-count"></span></div>
 
-            try {
-                const response = await fetch('/' + operation, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ a: a, b: b })
-                });
-                
-                const data = await response.json();
-                updateResultBox(data);
-                fetchHistory(); // background refresh
-            } catch (err) {
-                resultBox.innerText = 'Network Error';
-                resultBox.className = 'error';
-            }
+        <div id="auth-banner" class="auth-banner" style="display:none">
+            ⚠️ You are not signed in. <a href="/login">Sign in</a> to browse, save, edit, and delete calculations.
+        </div>
+
+        <div style="display:flex; gap:8px; margin-bottom:16px;">
+            <button class="btn btn-sm btn-primary" onclick="loadCalculations()" id="browse-btn">🔄 Refresh</button>
+        </div>
+
+        <div class="calc-table-wrap">
+            <table id="calc-table" aria-label="My calculations table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>A</th>
+                        <th>Op</th>
+                        <th>B</th>
+                        <th>Result</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="calc-tbody">
+                    <tr><td colspan="6"><div class="empty-state">Sign in to view your calculations.</div></td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- ── Edit Modal ── -->
+<div class="modal-overlay" id="edit-modal" role="dialog" aria-modal="true" aria-labelledby="edit-modal-title">
+    <div class="modal">
+        <div class="modal-title" id="edit-modal-title">✏️ Edit Calculation</div>
+
+        <input type="hidden" id="edit-calc-id">
+
+        <div class="form-row">
+            <div class="form-group" style="margin:0">
+                <label for="edit-a">Number A</label>
+                <input type="number" id="edit-a" step="any" aria-label="Edit operand A">
+                <div class="field-error" id="edit-a-error">Required.</div>
+            </div>
+            <div class="form-group" style="margin:0">
+                <label for="edit-b">Number B</label>
+                <input type="number" id="edit-b" step="any" aria-label="Edit operand B">
+                <div class="field-error" id="edit-b-error">Required.</div>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="edit-type">Operation</label>
+            <select id="edit-type" aria-label="Edit operation type">
+                <option value="ADD">Add</option>
+                <option value="SUBTRACT">Subtract</option>
+                <option value="MULTIPLY">Multiply</option>
+                <option value="DIVIDE">Divide</option>
+                <option value="INT_DIVIDE">Int Divide</option>
+            </select>
+        </div>
+
+        <div class="field-error visible" id="edit-api-error" style="display:none; font-size:13px; margin-top:8px;"></div>
+
+        <div class="modal-footer">
+            <button class="btn" onclick="closeEditModal()">Cancel</button>
+            <button class="btn btn-primary" id="edit-save-btn" onclick="submitEdit()">Save Changes</button>
+        </div>
+    </div>
+</div>
+
+<!-- ── Toast ── -->
+<div class="toast" id="toast"></div>
+
+<script>
+    // ── State ──────────────────────────────────────────────────────────────
+    const TOKEN_KEY = 'auth_token';
+    let currentResult = null;   // { a, b, type } of last in-memory calc
+    let authToken = null;
+
+    // ── Auth Helpers ───────────────────────────────────────────────────────
+    function getToken() { return localStorage.getItem(TOKEN_KEY); }
+
+    function parseJwtUser(token) {
+        try {
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            return { id: parseInt(payload.sub, 10) };
+        } catch { return null; }
+    }
+
+    function updateNavAuth() {
+        authToken = getToken();
+        const loginBtn    = document.getElementById('nav-login-btn');
+        const logoutBtn   = document.getElementById('nav-logout-btn');
+        const userDisplay = document.getElementById('nav-username-display');
+
+        if (authToken) {
+            loginBtn.style.display    = 'none';
+            logoutBtn.style.display   = 'inline-block';
+            userDisplay.style.display = 'inline-block';
+            // Fetch username from DB
+            authFetch('/users/' + parseJwtUser(authToken).id)
+                .then(r => r.ok ? r.json() : null)
+                .then(u => { if (u) document.getElementById('nav-username-text').textContent = u.username; })
+                .catch(() => {});
+        } else {
+            loginBtn.style.display    = 'inline-block';
+            logoutBtn.style.display   = 'none';
+            userDisplay.style.display = 'none';
         }
+    }
 
-        async function executeAdvanced(method, endpoint, bodyData) {
-            resultBox.innerText = 'Processing...';
-            resultBox.className = '';
+    function handleLogout() {
+        localStorage.removeItem(TOKEN_KEY);
+        authToken = null;
+        updateNavAuth();
+        renderEmptyTable('Sign in to view your calculations.');
+        document.getElementById('auth-banner').style.display = 'block';
+        document.getElementById('calc-count').textContent = '';
+        showToast('Logged out.', 'success');
+    }
 
-            const options = {
-                method: method,
-                headers: { 'Content-Type': 'application/json' }
-            };
-            if (bodyData) {
-                options.body = JSON.stringify(bodyData);
-            }
+    // ── Authenticated fetch ────────────────────────────────────────────────
+    async function authFetch(url, options = {}) {
+        const token = getToken();
+        const headers = { 'Content-Type': 'application/json', ...(options.headers || {}) };
+        if (token) headers['Authorization'] = 'Bearer ' + token;
+        return fetch(url, { ...options, headers });
+    }
 
-            try {
-                const response = await fetch(endpoint, options);
-                const data = await response.json();
-                updateResultBox(data);
-                fetchHistory();
-            } catch (err) {
-                resultBox.innerText = 'Network Error';
-                resultBox.className = 'error';
-            }
-        }
+    // ── Toast ──────────────────────────────────────────────────────────────
+    let toastTimer = null;
+    function showToast(msg, type = 'success') {
+        const t = document.getElementById('toast');
+        t.textContent = msg;
+        t.className = 'toast toast-' + type + ' show';
+        if (toastTimer) clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => { t.classList.remove('show'); }, 3000);
+    }
 
-        function updateResultBox(data) {
+    // ── Result Box ────────────────────────────────────────────────────────
+    const resultEl = document.getElementById('result-text');
+    const saveBtn  = document.getElementById('save-btn');
+
+    function setResult(text, cls) {
+        resultEl.textContent = text;
+        resultEl.className = cls;
+    }
+
+    // ── Arithmetic Calculator ─────────────────────────────────────────────
+
+    // Map from API endpoint → OperationType enum value
+    const OP_MAP = {
+        add: 'ADD', subtract: 'SUBTRACT', multiply: 'MULTIPLY',
+        divide: 'DIVIDE', power: null, root: null,
+        modulus: null, int_divide: 'INT_DIVIDE', percent: null, abs_diff: null
+    };
+
+    async function calculate(op, btn) {
+        const a = document.getElementById('a').value || '0';
+        const b = document.getElementById('b').value || '0';
+        setResult('Calculating…', '');
+        document.querySelectorAll('.op-btn').forEach(b => b.classList.remove('active'));
+        if (btn) btn.classList.add('active');
+        currentResult = null;
+        saveBtn.style.display = 'none';
+
+        try {
+            const resp = await fetch('/' + op, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ a, b })
+            });
+            const data = await resp.json();
             if (data.error) {
-                resultBox.innerText = data.error;
-                resultBox.className = 'error';
+                setResult(data.error, 'error');
             } else {
-                resultBox.innerText = data.result;
-                resultBox.className = 'success';
-            }
-        }
-
-        async function memStore() {
-            const val = document.getElementById('a').value || "0";
-            await executeAdvanced('POST', '/memory/store', {value: val});
-        }
-
-        async function memRecall() {
-            try {
-                const response = await fetch('/memory/recall');
-                const data = await response.json();
-                if (data.result && !data.result.includes("not found")) {
-                    document.getElementById('a').value = data.result;
-                    updateResultBox(data);
-                } else {
-                    updateResultBox({error: "No memory found"});
+                setResult(data.result, 'success');
+                fetchHistory();
+                // Only show Save button for ops we can persist
+                const dbType = OP_MAP[op];
+                if (dbType && getToken()) {
+                    currentResult = { a: parseFloat(a), b: parseFloat(b), type: dbType };
+                    saveBtn.style.display = 'inline-block';
                 }
-            } catch(e) {
-                updateResultBox({error: "Network error"});
             }
+        } catch {
+            setResult('Network Error', 'error');
         }
+    }
 
-        async function clearServerHistory() {
-            await executeAdvanced('POST', '/history/clear', null);
+    // ── A — Add / Save to DB ──────────────────────────────────────────────
+    async function saveCalculation() {
+        if (!currentResult) return;
+        if (!getToken()) {
+            showToast('Please sign in to save calculations.', 'error');
+            return;
+        }
+        saveBtn.disabled = true;
+        saveBtn.innerHTML = '<span class="spinner"></span> Saving…';
+        document.getElementById('save-error').textContent = '';
+        document.getElementById('save-error').style.display = 'none';
+
+        try {
+            const resp = await authFetch('/calculations/', {
+                method: 'POST',
+                body: JSON.stringify(currentResult)
+            });
+            const data = await resp.json();
+            if (resp.ok) {
+                showToast(`✅ Saved! (ID ${data.id})`, 'success');
+                currentResult = null;
+                saveBtn.style.display = 'none';
+                loadCalculations();
+            } else {
+                const msg = data.detail || JSON.stringify(data);
+                document.getElementById('save-error').textContent = '❌ ' + msg;
+                document.getElementById('save-error').style.display = 'block';
+                showToast('Save failed: ' + msg, 'error');
+            }
+        } catch {
+            showToast('Network error while saving.', 'error');
+        } finally {
+            saveBtn.disabled = false;
+            saveBtn.textContent = '💾 Save to DB';
+        }
+    }
+
+    // ── B — Browse: load calculations table ───────────────────────────────
+    async function loadCalculations() {
+        const banner = document.getElementById('auth-banner');
+        if (!getToken()) {
+            banner.style.display = 'block';
+            renderEmptyTable('Sign in to view your calculations.');
+            document.getElementById('calc-count').textContent = '';
+            return;
+        }
+        banner.style.display = 'none';
+        renderEmptyTable('Loading…');
+
+        try {
+            const resp = await authFetch('/calculations/');
+            if (resp.status === 401) {
+                banner.style.display = 'block';
+                renderEmptyTable('Not authenticated.');
+                return;
+            }
+            const data = await resp.json();
+            renderTable(data);
+            document.getElementById('calc-count').textContent =
+                data.length === 0 ? '' : `(${data.length} record${data.length > 1 ? 's' : ''})`;
+        } catch {
+            renderEmptyTable('Failed to load calculations.');
+        }
+    }
+
+    function renderEmptyTable(msg) {
+        document.getElementById('calc-tbody').innerHTML =
+            `<tr><td colspan="6"><div class="empty-state">${msg}</div></td></tr>`;
+    }
+
+    // ── R — Read view (click row to see details in toast) ─────────────────
+    function readCalculation(id, a, op, b, result) {
+        showToast(`📌 ID ${id}: ${a} ${op} ${b} = ${result}`, 'success');
+    }
+
+    function renderTable(calcs) {
+        const tbody = document.getElementById('calc-tbody');
+        if (!calcs.length) {
+            tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state">No calculations yet. Perform a calculation above and click "Save to DB"!</div></td></tr>`;
+            return;
+        }
+        tbody.innerHTML = calcs.map(c => `
+            <tr id="row-${c.id}">
+                <td>${c.id}</td>
+                <td>${c.a}</td>
+                <td><span class="type-badge">${c.type}</span></td>
+                <td>${c.b}</td>
+                <td class="result-val">${c.result}</td>
+                <td class="actions-cell">
+                    <button class="btn btn-sm" title="View details"
+                        id="read-btn-${c.id}"
+                        onclick="readCalculation(${c.id}, ${c.a}, '${c.type}', ${c.b}, ${c.result})">👁</button>
+                    <button class="btn btn-sm btn-warning" title="Edit"
+                        id="edit-btn-${c.id}"
+                        onclick="openEditModal(${c.id}, ${c.a}, ${c.b}, '${c.type}')">✏️</button>
+                    <button class="btn btn-sm btn-danger" title="Delete"
+                        id="delete-btn-${c.id}"
+                        onclick="deleteCalculation(${c.id})">🗑</button>
+                </td>
+            </tr>`
+        ).join('');
+    }
+
+    // ── E — Edit (PUT) ────────────────────────────────────────────────────
+    function openEditModal(id, a, b, type) {
+        document.getElementById('edit-calc-id').value = id;
+        document.getElementById('edit-a').value = a;
+        document.getElementById('edit-b').value = b;
+        document.getElementById('edit-type').value = type;
+        document.getElementById('edit-api-error').style.display = 'none';
+        document.getElementById('edit-api-error').textContent = '';
+        document.getElementById('edit-a').classList.remove('invalid');
+        document.getElementById('edit-b').classList.remove('invalid');
+        document.getElementById('edit-modal').classList.add('open');
+    }
+
+    function closeEditModal() {
+        document.getElementById('edit-modal').classList.remove('open');
+    }
+
+    async function submitEdit() {
+        const id   = document.getElementById('edit-calc-id').value;
+        const aVal = document.getElementById('edit-a').value.trim();
+        const bVal = document.getElementById('edit-b').value.trim();
+        const type = document.getElementById('edit-type').value;
+
+        // Client-side validation
+        let hasError = false;
+        if (aVal === '' || isNaN(parseFloat(aVal))) {
+            document.getElementById('edit-a').classList.add('invalid');
+            document.getElementById('edit-a-error').classList.add('visible');
+            hasError = true;
+        } else {
+            document.getElementById('edit-a').classList.remove('invalid');
+            document.getElementById('edit-a-error').classList.remove('visible');
+        }
+        if (bVal === '' || isNaN(parseFloat(bVal))) {
+            document.getElementById('edit-b').classList.add('invalid');
+            document.getElementById('edit-b-error').classList.add('visible');
+            hasError = true;
+        } else {
+            document.getElementById('edit-b').classList.remove('invalid');
+            document.getElementById('edit-b-error').classList.remove('visible');
+        }
+        if (hasError) return;
+
+        const saveBtn = document.getElementById('edit-save-btn');
+        saveBtn.disabled = true;
+        saveBtn.innerHTML = '<span class="spinner"></span> Saving…';
+
+        try {
+            const resp = await authFetch(`/calculations/${id}`, {
+                method: 'PUT',
+                body: JSON.stringify({ a: parseFloat(aVal), b: parseFloat(bVal), type })
+            });
+            const data = await resp.json();
+            if (resp.ok) {
+                closeEditModal();
+                showToast(`✅ Calculation #${id} updated!`, 'success');
+                loadCalculations();
+            } else {
+                const errMsg = typeof data.detail === 'string'
+                    ? data.detail
+                    : JSON.stringify(data.detail);
+                const errEl = document.getElementById('edit-api-error');
+                errEl.textContent = '❌ ' + errMsg;
+                errEl.style.display = 'block';
+            }
+        } catch {
+            showToast('Network error during edit.', 'error');
+        } finally {
+            saveBtn.disabled = false;
+            saveBtn.textContent = 'Save Changes';
+        }
+    }
+
+    // ── D — Delete ────────────────────────────────────────────────────────
+    async function deleteCalculation(id) {
+        if (!confirm(`Delete calculation #${id}? This cannot be undone.`)) return;
+        const btn = document.getElementById(`delete-btn-${id}`);
+        if (btn) { btn.disabled = true; btn.textContent = '…'; }
+
+        try {
+            const resp = await authFetch(`/calculations/${id}`, { method: 'DELETE' });
+            if (resp.status === 204) {
+                showToast(`🗑 Calculation #${id} deleted.`, 'success');
+                loadCalculations();
+            } else {
+                const data = await resp.json();
+                showToast('Delete failed: ' + (data.detail || resp.status), 'error');
+                if (btn) { btn.disabled = false; btn.textContent = '🗑'; }
+            }
+        } catch {
+            showToast('Network error during delete.', 'error');
+            if (btn) { btn.disabled = false; btn.textContent = '🗑'; }
+        }
+    }
+
+    // ── Memory & History (in-memory calculator) ───────────────────────────
+    async function execAdvanced(method, endpoint, body) {
+        const opts = { method, headers: { 'Content-Type': 'application/json' } };
+        if (body) opts.body = JSON.stringify(body);
+        try {
+            const resp = await fetch(endpoint, opts);
+            const data = await resp.json();
+            if (data.error) setResult(data.error, 'error');
+            else setResult(data.result, 'success');
             fetchHistory();
-        }
+        } catch { setResult('Network Error', 'error'); }
+    }
 
-        async function fetchHistory() {
-            try {
-                const res = await fetch('/history');
-                const data = await res.json();
-                const container = document.getElementById('history-container');
-                container.innerHTML = "";
-                
-                if (data.result && typeof data.result === "string" && data.result.includes("Calculation History")) {
-                    const lines = data.result.split('\n').filter(l => l.includes('=') || l.includes('Command:'));
-                    if (lines.length === 0) {
-                        container.innerHTML = "<div class='history-item'>No calculations yet.</div>";
-                        return;
-                    }
-                    lines.reverse().slice(0, 10).forEach(line => {
-                        const div = document.createElement('div');
-                        div.className = 'history-item';
-                        div.innerText = line.replace(/^\d+\.\s+/, '');
-                        container.appendChild(div);
-                    });
-                } else {
-                    container.innerHTML = "<div class='history-item'>History empty.</div>";
-                }
-            } catch(e) {}
-        }
+    async function memStore() {
+        const val = document.getElementById('a').value || '0';
+        await execAdvanced('POST', '/memory/store', { value: val });
+    }
 
-        // Init
+    async function memRecall() {
+        try {
+            const resp = await fetch('/memory/recall');
+            const data = await resp.json();
+            if (data.result && !data.result.includes('not found')) {
+                document.getElementById('a').value = data.result;
+                setResult(data.result, 'success');
+            } else { setResult('No memory found', 'error'); }
+        } catch { setResult('Network Error', 'error'); }
+    }
+
+    async function clearServerHistory() {
+        await execAdvanced('POST', '/history/clear', null);
         fetchHistory();
-    </script>
+    }
+
+    async function fetchHistory() {
+        try {
+            const res  = await fetch('/history');
+            const data = await res.json();
+            const container = document.getElementById('history-container');
+            container.innerHTML = '';
+            if (data.result && typeof data.result === 'string' && data.result.includes('Calculation History')) {
+                const lines = data.result.split('\n').filter(l => l.includes('=') || l.includes('Command:'));
+                if (!lines.length) {
+                    container.innerHTML = "<div class='history-item'>No calculations yet.</div>";
+                    return;
+                }
+                lines.reverse().slice(0, 10).forEach(line => {
+                    const div = document.createElement('div');
+                    div.className = 'history-item';
+                    div.textContent = line.replace(/^\d+\.\s+/, '');
+                    container.appendChild(div);
+                });
+            } else {
+                container.innerHTML = "<div class='history-item'>History empty.</div>";
+            }
+        } catch {}
+    }
+
+    // Close modal on overlay click
+    document.getElementById('edit-modal').addEventListener('click', function(e) {
+        if (e.target === this) closeEditModal();
+    });
+
+    // ── Init ──────────────────────────────────────────────────────────────
+    updateNavAuth();
+    fetchHistory();
+    loadCalculations();
+</script>
 </body>
 </html>
