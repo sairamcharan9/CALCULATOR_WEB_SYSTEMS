@@ -7,6 +7,13 @@ A professional-grade, dual-mode Calculator built in Python featuring a full **CL
 
 ---
 
+## 📸 Application Interface Preview
+
+![CalcBREAD Frontend Interface](./docs/screenshot.png)
+*(Above: The stunning Glassmorphism SPA frontend featuring instant mode switching, calculation dashboards, interactive arithmetic keys, and profile session controls.)*
+
+---
+
 ## 🚀 Features
 
 - **Dual Interaction Modes** — FastAPI SPA and interactive CLI REPL
@@ -308,24 +315,6 @@ CALCULATOR_WEB_SYSTEMS/
 ├── requirements.txt              # Python dependencies
 └── pytest.ini                    # Test configuration
 ```
-
----
-
-
-
-### Module 14 — Calculation BREAD Endpoints
-
-**What was implemented:**
-This module introduced the BREAD (Browse, Read, Edit, Add, Delete) operations for calculations. The front-end application now integrates these endpoints, allowing users to browse their calculation history in a data table, add new calculations, view details, edit existing operations or operands, and delete records. The API was backed by SQLAlchemy models interacting with PostgreSQL. Playwright tests were added to ensure the reliability of these functionalities in the browser.
-
-**Key challenges:**
-- Integrating SQLAlchemy models with FastAPI endpoints required careful handling of session lifecycles.
-- Ensuring calculations are scoped correctly to the logged-in user so users only see and interact with their own history.
-- Handling division by zero logic within the factory and making sure exceptions bubble up to the user gracefully.
-- Writing Playwright tests that required managing localStorage JWT tokens to authenticate before performing BREAD operations in tests.
-
-**What was learned:**
-Building a full-stack feature involving the API, Database, and Frontend solidifies the understanding of data flow across the stack. Utilizing the Factory pattern for calculation models makes it easy to add or modify arithmetic operations. Tying user authentication into BREAD operations demonstrates the importance of security and data privacy in web systems.
 
 ---
 
