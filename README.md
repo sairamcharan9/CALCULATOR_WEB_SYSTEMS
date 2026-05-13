@@ -17,6 +17,13 @@ A professional-grade, dual-mode Calculator built in Python featuring a full **CL
 ![CalcBREAD Dashboard & History](image%20copy.png)
 *(Above: The robust interactive history dashboard allowing real-time browsing, detailed inspection, inline editing, and deletion of user calculations via fully integrated BREAD endpoints.)*
 
+### Authentication Interfaces (Login & Registration)
+
+| **Secure Login View** | **User Registration View** |
+|:---:|:---:|
+| ![Login View](image%20copy%202.png) | ![Registration View](image%20copy%203.png) |
+| *Client-side validated login interface storing JWT tokens securely into browser local storage.* | *Multi-layered registration view validating secure credentials with matching password confirmation.* |
+
 ---
 
 ## 🚀 Features
