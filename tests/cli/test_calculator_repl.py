@@ -194,3 +194,13 @@ class TestCalculatorREPL:
         if log_path.exists():
             content = log_path.read_text(encoding="utf-8")
             assert "Auto-loaded" in content or "auto" in content.lower() or len(calc2.history) == 1
+
+    def test_macro_command(self, calculator: Calculator) -> None:
+        """macro command dynamically evaluates custom string formulas with optional mappings."""
+        # Test basic evaluation
+        msg = calculator.process_input("macro add(power(a, 2), power(b, 2)) a=3 b=4")
+        assert "Result: 25" in msg
+
+        # Test empty arguments returns usage error
+        err_msg = calculator.process_input("macro")
+        assert "Usage is" in err_msg

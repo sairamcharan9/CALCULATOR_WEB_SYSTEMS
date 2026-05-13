@@ -121,6 +121,7 @@
         .tab-content.active { 
             display: flex;
             flex-direction: column;
+            justify-content: flex-start;
         }
         
         .dashboard-grid {
@@ -128,7 +129,9 @@
             grid-template-columns: 340px 1fr;
             gap: 24px;
             align-items: start;
-            height: 100%;
+            align-content: start;
+            height: auto;
+            flex: 1;
             overflow: hidden;
         }
         @keyframes fadeIn { from {opacity:0; transform:translateY(5px)} to {opacity:1; transform:translateY(0)} }
@@ -425,68 +428,81 @@
 
     <div class="tabs-nav">
         <button class="tab-btn active" id="tab-btn-calculator" onclick="switchTab('calculator')">🔢 Calculator</button>
+        <button class="tab-btn" id="tab-btn-macros" onclick="switchTab('macros')">🧬 Formulae</button>
         <button class="tab-btn" id="tab-btn-dashboard" onclick="switchTab('dashboard')">📊 Dashboard & History</button>
     </div>
 
     <!-- TAB: Calculator Panel -->
     <div id="tab-calculator" class="tab-content active">
-        <div style="display: flex; flex-direction: column; gap: 32px; max-width: 580px; margin: 0 auto; width: 100%; height: auto; align-items: stretch; justify-content: flex-start; padding-bottom: 24px;">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(420px, 1fr)); gap: 24px; max-width: 960px; margin: 0 auto; width: 100%; align-items: start; padding-bottom: 24px;">
             
-            <!-- TOP: Calculator Panel -->
-            <div class="card" style="width: 100%; flex-shrink: 0; padding: 32px; display: flex; flex-direction: column; justify-content: flex-start; overflow: visible;">
-                <div class="card-title" style="justify-content: center; border-bottom: none; margin-bottom: 12px; font-size: 22px; flex-shrink: 0;"><span class="emoji">🔢</span> Calculator</div>
+            <!-- LEFT Side: Calculator & Results -->
+            <div style="display: flex; flex-direction: column; gap: 24px; width: 100%;">
+                <!-- Calculator Panel Card -->
+                <div class="card" style="width: 100%; padding: 32px; display: flex; flex-direction: column; justify-content: flex-start; overflow: visible;">
+                    <div class="card-title" style="justify-content: center; border-bottom: none; margin-bottom: 12px; font-size: 22px; flex-shrink: 0;"><span class="emoji">🔢</span> Calculator</div>
 
-                <div>
-                    <div class="form-row" style="margin-bottom: 24px; gap: 16px;">
-                        <input type="number" id="a" placeholder="Number A" step="any" aria-label="First operand" style="font-size: 22px; text-align: center; padding: 14px; border-radius: 20px; font-weight: 300; background: rgba(0,0,0,0.4);">
-                        <input type="number" id="b" placeholder="Number B" step="any" aria-label="Second operand" style="font-size: 22px; text-align: center; padding: 14px; border-radius: 20px; font-weight: 300; background: rgba(0,0,0,0.4);">
+                    <div>
+                        <div class="form-row" style="margin-bottom: 24px; gap: 16px;">
+                            <input type="number" id="a" placeholder="Number A" step="any" aria-label="First operand" style="font-size: 22px; text-align: center; padding: 14px; border-radius: 20px; font-weight: 300; background: rgba(0,0,0,0.4);">
+                            <input type="number" id="b" placeholder="Number B" step="any" aria-label="Second operand" style="font-size: 22px; text-align: center; padding: 14px; border-radius: 20px; font-weight: 300; background: rgba(0,0,0,0.4);">
+                        </div>
+
+                        <div class="calc-unified-grid">
+                            <!-- Row 1 -->
+                            <button class="op-btn" id="op-power"      onclick="calculate('power', this)">a^b</button>
+                            <button class="op-btn" id="op-root"       onclick="calculate('root', this)">b√a</button>
+                            <button class="numpad-btn" onclick="insertNum('7')">7</button>
+                            <button class="numpad-btn" onclick="insertNum('8')">8</button>
+                            <button class="numpad-btn" onclick="insertNum('9')">9</button>
+                            <button class="op-btn" id="op-divide"     style="background: rgba(167, 139, 252, 0.1); color: var(--btn-accent);" onclick="calculate('divide', this)">÷</button>
+                            
+                            <!-- Row 2 -->
+                            <button class="op-btn" id="op-modulus"    onclick="calculate('modulus', this)">a % b</button>
+                            <button class="op-btn" id="op-int_divide" onclick="calculate('int_divide', this)">a // b</button>
+                            <button class="numpad-btn" onclick="insertNum('4')">4</button>
+                            <button class="numpad-btn" onclick="insertNum('5')">5</button>
+                            <button class="numpad-btn" onclick="insertNum('6')">6</button>
+                            <button class="op-btn" id="op-multiply"   style="background: rgba(167, 139, 252, 0.1); color: var(--btn-accent);" onclick="calculate('multiply', this)">×</button>
+                            
+                            <!-- Row 3 -->
+                            <button class="op-btn" id="op-percent"    onclick="calculate('percent', this)">%</button>
+                            <button class="op-btn" id="op-abs_diff"   onclick="calculate('abs_diff', this)">|a-b|</button>
+                            <button class="numpad-btn" onclick="insertNum('1')">1</button>
+                            <button class="numpad-btn" onclick="insertNum('2')">2</button>
+                            <button class="numpad-btn" onclick="insertNum('3')">3</button>
+                            <button class="op-btn" id="op-subtract"   style="background: rgba(167, 139, 252, 0.1); color: var(--btn-accent);" onclick="calculate('subtract', this)">−</button>
+
+                            <!-- Row 4 -->
+                            <button class="numpad-btn" style="grid-column: span 2; color: var(--error);" onclick="clearInputs()">AC</button>
+                            <button class="numpad-btn" onclick="insertNum('0')">0</button>
+                            <button class="numpad-btn" onclick="insertNum('.')">.</button>
+                            <button class="op-btn btn-calc-action" id="op-add" onclick="calculate('add', this)" style="grid-column: span 2;">+</button>
+                        </div>
                     </div>
+                </div>
 
-                    <div class="calc-unified-grid">
-                        <!-- Row 1 -->
-                        <button class="op-btn" id="op-power"      onclick="calculate('power', this)">a^b</button>
-                        <button class="op-btn" id="op-root"       onclick="calculate('root', this)">b√a</button>
-                        <button class="numpad-btn" onclick="insertNum('7')">7</button>
-                        <button class="numpad-btn" onclick="insertNum('8')">8</button>
-                        <button class="numpad-btn" onclick="insertNum('9')">9</button>
-                        <button class="op-btn" id="op-divide"     style="background: rgba(167, 139, 252, 0.1); color: var(--btn-accent);" onclick="calculate('divide', this)">÷</button>
-                        
-                        <!-- Row 2 -->
-                        <button class="op-btn" id="op-modulus"    onclick="calculate('modulus', this)">a % b</button>
-                        <button class="op-btn" id="op-int_divide" onclick="calculate('int_divide', this)">a // b</button>
-                        <button class="numpad-btn" onclick="insertNum('4')">4</button>
-                        <button class="numpad-btn" onclick="insertNum('5')">5</button>
-                        <button class="numpad-btn" onclick="insertNum('6')">6</button>
-                        <button class="op-btn" id="op-multiply"   style="background: rgba(167, 139, 252, 0.1); color: var(--btn-accent);" onclick="calculate('multiply', this)">×</button>
-                        
-                        <!-- Row 3 -->
-                        <button class="op-btn" id="op-percent"    onclick="calculate('percent', this)">%</button>
-                        <button class="op-btn" id="op-abs_diff"   onclick="calculate('abs_diff', this)">|a-b|</button>
-                        <button class="numpad-btn" onclick="insertNum('1')">1</button>
-                        <button class="numpad-btn" onclick="insertNum('2')">2</button>
-                        <button class="numpad-btn" onclick="insertNum('3')">3</button>
-                        <button class="op-btn" id="op-subtract"   style="background: rgba(167, 139, 252, 0.1); color: var(--btn-accent);" onclick="calculate('subtract', this)">−</button>
-
-                        <!-- Row 4 -->
-                        <button class="numpad-btn" style="grid-column: span 2; color: var(--error);" onclick="clearInputs()">AC</button>
-                        <button class="numpad-btn" onclick="insertNum('0')">0</button>
-                        <button class="numpad-btn" onclick="insertNum('.')">.</button>
-                        <button class="op-btn btn-calc-action" id="op-add" onclick="calculate('add', this)" style="grid-column: span 2;">+</button>
+                <!-- Computation Result Card -->
+                <div class="card" style="width: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; border: 1px dashed rgba(167, 139, 252, 0.3); background: rgba(0,0,0,0.2); text-align: center; padding: 32px;">
+                    <div style="font-size: 14px; text-transform: uppercase; color: var(--btn-accent); margin-bottom: 24px; letter-spacing: 0.15em; font-weight: 600;">Computation Result</div>
+                    <div class="result-box" style="margin-top:0; width: 100%; border: none; background: transparent; flex-direction: column; gap: 24px; padding: 0;">
+                        <span id="result-text" class="muted" style="font-size: 48px; line-height: 1.2;">Ready…</span>
+                        <button class="btn btn-success" id="save-btn" onclick="saveCalculation()" style="display:none; padding: 14px 28px; font-size: 16px; font-weight: 700; border-radius: 12px; box-shadow: 0 8px 20px -6px rgba(16, 185, 129, 0.4);">
+                            💾 Save to Database
+                        </button>
+                        <div id="save-error" class="field-error" style="margin-top:8px"></div>
                     </div>
                 </div>
             </div>
 
-            <!-- BOTTOM: Results Side -->
-            <div class="card" style="width: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; border: 1px dashed rgba(167, 139, 252, 0.3); background: rgba(0,0,0,0.2); text-align: center; padding: 32px;">
-                <div style="font-size: 14px; text-transform: uppercase; color: var(--btn-accent); margin-bottom: 24px; letter-spacing: 0.15em; font-weight: 600;">Computation Result</div>
-                <div class="result-box" style="margin-top:0; width: 100%; border: none; background: transparent; flex-direction: column; gap: 24px; padding: 0;">
-                    <span id="result-text" class="muted" style="font-size: 48px; line-height: 1.2;">Ready…</span>
-                    <button class="btn btn-success" id="save-btn" onclick="saveCalculation()" style="display:none; padding: 14px 28px; font-size: 16px; font-weight: 700; border-radius: 12px; box-shadow: 0 8px 20px -6px rgba(16, 185, 129, 0.4);">
-                        💾 Save to Database
-                    </button>
-                    <div id="save-error" class="field-error" style="margin-top:8px"></div>
+            <!-- RIGHT Side: Dynamic Custom Formulae -->
+            <div class="card" style="width: 100%; padding: 24px; align-self: start;">
+                <div style="font-size: 12px; text-transform: uppercase; color: var(--btn-accent); margin-bottom: 12px; letter-spacing: 0.1em; font-weight: 600;">⚡ Custom Formulae</div>
+                <div id="calculator-macros-container" style="display: flex; flex-wrap: wrap; gap: 8px;">
+                    <div class="empty-state" style="padding: 10px; font-size: 13px;">No macros available. Create one in the 🧬 Formulae tab!</div>
                 </div>
             </div>
+
         </div>
     </div>
 
@@ -543,10 +559,68 @@
                 </tbody>
             </table>
         </div>
-        </div>
     </div>
-    </div> <!-- End Dashboard Grid -->
-    </div> <!-- End Dashboard Tab -->
+</div> <!-- End Dashboard Grid -->
+</div> <!-- End Dashboard Tab -->
+
+    <!-- TAB: Dynamic User-Defined Formula Macros -->
+    <div id="tab-macros" class="tab-content">
+        <div class="dashboard-grid" style="grid-template-columns: 400px 1fr; align-content: start;">
+            <!-- Left: Formula Builder Panel -->
+            <div class="card" style="align-self: start;">
+                <div class="card-title"><span class="emoji">🛠️</span> Formula Builder</div>
+                <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px;">
+                    Define complex custom formulas using standard operation names (e.g., <code>add</code>, <code>power</code>, <code>root</code>) and variables.
+                </p>
+                <div class="form-group">
+                    <label for="macro-name-input">Formula Name</label>
+                    <input type="text" id="macro-name-input" placeholder="e.g., hypotenuse" value="hypotenuse">
+                </div>
+                <div class="form-group">
+                    <label for="macro-expr-input">Expression String</label>
+                    <input type="text" id="macro-expr-input" placeholder="e.g., root(add(power(a, 2), power(b, 2)), 2)" value="root(add(power(a, 2), power(b, 2)), 2)">
+                </div>
+
+                <div style="border-top: 1px solid var(--glass-border); margin: 16px 0 12px; padding-top: 12px;">
+                    <label>Test Variables (Optional)</label>
+                    <div class="form-row" style="margin-bottom: 8px;">
+                        <input type="text" id="macro-test-var1-name" placeholder="Var Name (e.g. a)" value="a" style="font-size: 14px; padding: 8px;">
+                        <input type="number" id="macro-test-var1-val" placeholder="Value" value="3" style="font-size: 14px; padding: 8px;">
+                    </div>
+                    <div class="form-row" style="margin-bottom: 12px;">
+                        <input type="text" id="macro-test-var2-name" placeholder="Var Name (e.g. b)" value="b" style="font-size: 14px; padding: 8px;">
+                        <input type="number" id="macro-test-var2-val" placeholder="Value" value="4" style="font-size: 14px; padding: 8px;">
+                    </div>
+                </div>
+
+                <div id="macro-test-res" style="margin-bottom: 14px; font-size: 14px; font-weight: 600; color: var(--btn-accent); display: none;"></div>
+
+                <div style="display: flex; gap: 8px;">
+                    <button class="btn btn-warning" style="flex: 1;" onclick="testMacroExpression()">⚡ Test</button>
+                    <button class="btn btn-primary" style="flex: 2;" onclick="saveMacroExpression()">💾 Save Macro</button>
+                </div>
+            </div>
+
+            <!-- Right: Stored Macros List -->
+            <div class="card" style="align-self: start;">
+                <div class="card-title"><span class="emoji">🗄️</span> Stored Macros</div>
+                <div class="calc-table-wrap">
+                    <table aria-label="Stored macros table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Expression</th>
+                                <th style="width: 80px;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="macros-tbody">
+                            <tr><td colspan="3"><div class="empty-state">Loading macros...</div></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div> <!-- End Macros Tab -->
 </div> <!-- End Page Wrapper -->
     <!-- Modals -->
     <!-- Edit Calculation Modal -->
@@ -719,7 +793,14 @@
     const saveBtn  = document.getElementById('save-btn');
 
     function setResult(text, cls) {
-        resultEl.textContent = text;
+        let disp = text;
+        if (cls === 'success' && disp !== null && disp !== undefined) {
+            const num = parseFloat(disp);
+            if (!isNaN(num)) {
+                disp = parseFloat(Number(disp).toFixed(12)).toString();
+            }
+        }
+        resultEl.textContent = disp;
         resultEl.className = cls;
     }
 
@@ -1147,10 +1228,176 @@
         }
     }
 
+    // ── Dynamic Macros Logic ──────────────────────────────────────────────
+    async function fetchMacros() {
+        if (!authToken) return;
+        try {
+            const resp = await authFetch('/macros/');
+            if (resp.ok) {
+                const data = await resp.json();
+                renderMacrosTable(data);
+                renderCalculatorMacrosKeypad(data);
+            }
+        } catch {
+            console.error("Failed to load macros");
+        }
+    }
+
+    function renderMacrosTable(macros) {
+        const tbody = document.getElementById('macros-tbody');
+        if (!macros || !macros.length) {
+            tbody.innerHTML = `<tr><td colspan="3"><div class="empty-state">No custom formulas created yet. Build one on the left!</div></td></tr>`;
+            return;
+        }
+        tbody.innerHTML = macros.map(m => `
+            <tr>
+                <td style="font-weight: 700; color: var(--btn-accent);">${m.name}</td>
+                <td><code style="background: rgba(0,0,0,0.3); padding: 4px 8px; border-radius: 6px; font-size: 13px;">${m.expression}</code></td>
+                <td>
+                    <button class="btn btn-sm btn-danger" title="Delete macro" onclick="deleteMacro(${m.id})">🗑 Delete</button>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    function renderCalculatorMacrosKeypad(macros) {
+        const container = document.getElementById('calculator-macros-container');
+        if (!container) return;
+        if (!macros || !macros.length) {
+            container.innerHTML = `<div class="empty-state" style="padding: 10px; font-size: 13px;">No macros available. Create one in the 🧬 Formulae tab!</div>`;
+            return;
+        }
+        container.innerHTML = macros.map(m => `
+            <button class="btn" style="background: rgba(167, 139, 252, 0.15); border-color: rgba(167, 139, 252, 0.4); color: var(--btn-accent); font-weight: 600; padding: 10px 16px; border-radius: 12px; font-size: 14px;" title="${m.expression}" onclick="executeStoredMacro(${m.id}, '${m.name.replace(/'/g, "\\'")}')">
+                ⚡ ${m.name}
+            </button>
+        `).join('');
+    }
+
+    async function testMacroExpression() {
+        const expr = document.getElementById('macro-expr-input').value.trim();
+        if (!expr) {
+            showToast('Please enter an expression string to test', 'error');
+            return;
+        }
+        const v1Name = document.getElementById('macro-test-var1-name').value.trim();
+        const v1Val = parseFloat(document.getElementById('macro-test-var1-val').value) || 0;
+        const v2Name = document.getElementById('macro-test-var2-name').value.trim();
+        const v2Val = parseFloat(document.getElementById('macro-test-var2-val').value) || 0;
+
+        const variables = {};
+        if (v1Name) variables[v1Name] = v1Val;
+        if (v2Name) variables[v2Name] = v2Val;
+
+        const resEl = document.getElementById('macro-test-res');
+        resEl.style.display = 'block';
+        resEl.textContent = 'Testing...';
+        resEl.style.color = 'var(--warning)';
+
+        try {
+            const resp = await authFetch('/macros/execute', {
+                method: 'POST',
+                body: JSON.stringify({ expression: expr, variables })
+            });
+            const data = await resp.json();
+            if (resp.ok) {
+                const num = parseFloat(data.result);
+                const disp = !isNaN(num) ? parseFloat(Number(data.result).toFixed(12)).toString() : data.result;
+                resEl.textContent = `Result: ${disp}`;
+                resEl.style.color = 'var(--success)';
+                showToast('Expression valid!', 'success');
+            } else {
+                resEl.textContent = `Error: ${data.detail || 'Evaluation failed'}`;
+                resEl.style.color = 'var(--error)';
+            }
+        } catch {
+            resEl.textContent = 'Network Error';
+            resEl.style.color = 'var(--error)';
+        }
+    }
+
+    async function saveMacroExpression() {
+        const name = document.getElementById('macro-name-input').value.trim();
+        const expr = document.getElementById('macro-expr-input').value.trim();
+        if (!name || !expr) {
+            showToast('Formula Name and Expression are required', 'error');
+            return;
+        }
+        try {
+            const resp = await authFetch('/macros/', {
+                method: 'POST',
+                body: JSON.stringify({ name, expression: expr })
+            });
+            const data = await resp.json();
+            if (resp.ok) {
+                showToast(`✅ Macro saved: ${data.name}`, 'success');
+                document.getElementById('macro-name-input').value = '';
+                document.getElementById('macro-expr-input').value = '';
+                document.getElementById('macro-test-res').style.display = 'none';
+                fetchMacros();
+            } else {
+                showToast(`❌ ${data.detail || 'Save failed'}`, 'error');
+            }
+        } catch {
+            showToast('Network error saving macro', 'error');
+        }
+    }
+
+    async function deleteMacro(id) {
+        if (!confirm("Are you sure you want to delete this custom formula?")) return;
+        try {
+            const resp = await authFetch(`/macros/${id}`, { method: 'DELETE' });
+            if (resp.status === 204) {
+                showToast('🗑 Macro deleted', 'success');
+                fetchMacros();
+            } else {
+                showToast('Failed to delete macro', 'error');
+            }
+        } catch {
+            showToast('Network error', 'error');
+        }
+    }
+
+    async function executeStoredMacro(id, name) {
+        // Collect current variables from Number A and Number B inputs dynamically
+        const aVal = parseFloat(document.getElementById('a').value) || 0;
+        const bVal = parseFloat(document.getElementById('b').value) || 0;
+        // Inject mappings a and b natively
+        const variables = { a: aVal, b: bVal };
+
+        setResult(`Executing ${name}…`, '');
+        try {
+            const resp = await authFetch('/macros/execute', {
+                method: 'POST',
+                body: JSON.stringify({ macro_id: id, variables })
+            });
+            const data = await resp.json();
+            if (resp.ok) {
+                setResult(data.result, 'success');
+                showToast(`⚡ Macro executed: ${name}`, 'success');
+                loadCalculations();
+            } else {
+                setResult(data.detail || 'Macro Execution Error', 'error');
+            }
+        } catch {
+            setResult('Network Error', 'error');
+        }
+    }
+
+    // Hook tab switches to fetch macros fresh if switching to macros tab
+    const originalSwitchTab = switchTab;
+    switchTab = function(tabId) {
+        originalSwitchTab(tabId);
+        if (tabId === 'macros' || tabId === 'calculator') {
+            fetchMacros();
+        }
+    };
+
     // ── Init ──────────────────────────────────────────────────────────────
     updateNavAuth();
     loadStats();
     loadCalculations();
+    fetchMacros();
 </script>
 </body>
 </html>

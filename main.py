@@ -21,6 +21,7 @@ from app.cli.calculator_factory import CalculatorFactory
 from app.api.database import engine, Base
 from app.api.user_routes import router as user_router
 from app.api.calculation_routes import router as calc_router
+from app.api.macro_routes import router as macro_router
 
 # ── Logging ────────────────────────────────────────────────────────────────
 logging.basicConfig(
@@ -81,6 +82,7 @@ async def add_security_headers(request: Request, call_next):
 
 app.include_router(user_router)
 app.include_router(calc_router)
+app.include_router(macro_router)
 
 # ── Templates & Calculator Core ───────────────────────────────────────────
 

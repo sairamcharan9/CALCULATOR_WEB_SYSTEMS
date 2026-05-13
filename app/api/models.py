@@ -32,9 +32,28 @@ class User(Base):
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     calculations = relationship("Calculation", back_populates="user", cascade="all, delete-orphan")
+    formulas = relationship("CustomFormula", back_populates="user", cascade="all, delete-orphan")
 
     def __repr__(self):
         return f"<User(id={self.id}, username='{self.username}', email='{self.email}')>"
+
+
+class CustomFormula(Base):
+    """
+    CustomFormula model storing user-defined macro formulas.
+    """
+    __tablename__ = "custom_formulas"
+
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    name = Column(String(50), nullable=False)
+    expression = Column(String(500), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+    user = relationship("User", back_populates="formulas")
+
+    def __repr__(self):
+        return f"<CustomFormula(id={self.id}, name='{self.name}', expression='{self.expression}')>"
 
 
 class Calculation(Base):
