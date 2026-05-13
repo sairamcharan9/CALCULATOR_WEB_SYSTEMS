@@ -311,22 +311,7 @@ CALCULATOR_WEB_SYSTEMS/
 
 ---
 
-## 📝 Reflection
 
-### Module 13 — JWT Authentication
-
-**What was implemented:**
-This module added JWT-based authentication to the existing FastAPI calculator. The `/users/login` endpoint now generates an HS256-signed JWT using `python-jose`, and the front-end login page stores it in `localStorage`. Two styled HTML pages (`register.html` and `login.html`) were built matching the existing dark glassmorphism aesthetic, each with full client-side validation. Four Playwright E2E tests were added covering both positive (valid registration, valid login + token check) and negative (short password caught client-side, wrong password caught server-side with 401 UI feedback) scenarios.
-
-**Key challenges:**
-- Integrating `python-jose` alongside `passlib[bcrypt]` required careful dependency pinning (`bcrypt==4.0.1`) to avoid version conflicts.
-- The Playwright negative test for wrong passwords had to explicitly clear `localStorage` state between test runs to avoid cross-test token pollution.
-- The CI environment needed `JWT_SECRET` wired as an env var so the server could sign tokens during the automated test run.
-
-**What was learned:**
-JWT stateless authentication is straightforward to add to a FastAPI app but requires deliberate thought around token expiry, secret management, and the difference between authentication (who you are) vs. authorization (what you can do). The `WWW-Authenticate: Bearer` header on 401 responses aligns the API with RFC 6750.
-
----
 
 ### Module 14 — Calculation BREAD Endpoints
 
