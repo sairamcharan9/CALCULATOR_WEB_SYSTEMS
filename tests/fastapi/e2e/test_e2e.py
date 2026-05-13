@@ -149,6 +149,25 @@ def test_divide_by_zero_e2e(page):
     expect(result_loc).to_have_class("error", timeout=10000)
 
 
+def test_history_e2e(page):
+    """Test that the dashboard stats panel loads after a calculation"""
+    _auth_setup(page)
+    page.goto(BASE_URL)
+    page.wait_for_selector("#a")
+    page.fill("#a", "8")
+    page.fill("#b", "2")
+    page.click("#op-multiply")
+    expect(page.locator("#result-text")).to_contain_text("16", timeout=10000)
+
+    # Switch to Dashboard Tab
+    page.click("#tab-btn-dashboard")
+    page.wait_for_selector("#analytics-panel", state="visible")
+
+    # Click Refresh Stats
+    page.click("button:has-text('Refresh Stats')")
+    time.sleep(1)
+
+    expect(page.locator("#stat-total")).to_be_visible()
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -386,7 +405,6 @@ def test_add_missing_operand_validation_e2e(page):
 
     # The result-text element must have class "error"
     expect(page.locator("#result-text")).to_have_class("error", timeout=10000)
-
     # Save button must NOT appear after a divide-by-zero error
     time.sleep(0.5)
     expect(page.locator("#save-btn")).not_to_be_visible()
