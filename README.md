@@ -52,10 +52,25 @@ pip install -r requirements.txt
 
 ---
 
+## ⚡ Quick Access Shortcuts (Makefile)
+
+For maximum convenience, a `Makefile` is included to run frequent tasks effortlessly:
+
+| Command | Target / Function | Description |
+|---------|-------------------|-------------|
+| `make web` | **FastAPI Server** | Starts the web application server on `http://127.0.0.1:8000`. |
+| `make cli` | **Interactive Interface** | Starts the fully-featured interactive terminal calculator REPL. |
+| `make playground` | **Python Console** | Starts an interactive Python REPL pre-loaded with app components. |
+| `make test` | **Full Test Suite** | Runs all 288+ tests across unit/integration/E2E with coverage reports. |
+| `make docker-up` | **Container Orchestration** | Builds and orchestrates the full FastAPI + PostgreSQL Docker stack. |
+| `make help` | **Helper Overview** | Displays all available target commands and descriptions. |
+
+---
+
 ## 🌐 FastAPI Web Application
 
 ```bash
-python main.py          # starts uvicorn on http://127.0.0.1:8000
+make web                # shortcut for: python main.py
 ```
 
 | URL | Description |
@@ -96,7 +111,7 @@ curl -X POST http://localhost:8000/calculations/ \
 ## 💻 CLI REPL
 
 ```bash
-python main.py --cli
+make cli                # shortcut for: python main.py --cli
 ```
 
 ```
