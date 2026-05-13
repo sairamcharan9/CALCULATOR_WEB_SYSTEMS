@@ -405,10 +405,80 @@ def test_add_missing_operand_validation_e2e(page):
 
     # The result-text element must have class "error"
     expect(page.locator("#result-text")).to_have_class("error", timeout=10000)
-
     # Save button must NOT appear after a divide-by-zero error
     time.sleep(0.5)
     expect(page.locator("#save-btn")).not_to_be_visible()
 
 
+# ─────────────────────────────────────────────────────────────────────────────
+# Profile & Password E2E tests
+# ─────────────────────────────────────────────────────────────────────────────
 
+def test_profile_update_e2e(page):
+    """POSITIVE — Update username and email via the profile modal."""
+    uid = uuid.uuid4().hex[:8]
+    username, password = _setup_user(uid)
+
+    _login_and_get_token(page, username, password)
+    page.goto(BASE_URL)
+    
+    # Open Profile Modal
+    page.click("#nav-profile-btn")
+    expect(page.locator("#profile-modal")).to_be_visible(timeout=5000)
+    
+    # Update profile fields
+    new_username = f"updated_{uid}"
+    new_email = f"updated_{uid}@example.com"
+    page.fill("#profile-username-input", new_username)
+    page.fill("#profile-email-input", new_email)
+    
+    # Submit update
+    page.click("#btn-update-profile")
+    
+    # Verify success toast
+    expect(page.locator("#toast")).to_contain_text("Profile updated successfully!", timeout=8000)
+    
+    # Verify username changed in the nav
+    expect(page.locator("#nav-username-text")).to_contain_text(new_username, timeout=5000)
+    
+    # Close Modal
+    page.click("button:has-text('Close')")
+    expect(page.locator("#profile-modal")).not_to_be_visible(timeout=5000)
+
+def test_password_change_e2e(page):
+    """POSITIVE — Change password via the profile modal, verify old password fails, new works."""
+    uid = uuid.uuid4().hex[:8]
+    username, old_password = _setup_user(uid)
+    new_password = "NewSecurePass123!"
+
+    _login_and_get_token(page, username, old_password)
+    page.goto(BASE_URL)
+    
+    # Open Profile Modal
+    page.click("#nav-profile-btn")
+    expect(page.locator("#profile-modal")).to_be_visible(timeout=5000)
+    
+    # Update password
+    page.fill("#profile-curr-pass", old_password)
+    page.fill("#profile-new-pass", new_password)
+    page.click("#btn-update-password")
+    
+    # Verify success toast
+    expect(page.locator("#toast")).to_contain_text("Password changed. Please log in again.", timeout=8000)
+    
+    # The frontend logs out automatically after 1.5s
+    page.wait_for_url(BASE_URL + "/login", timeout=8000)
+    
+    # Try logging in with the old password
+    page.fill("#login-username", username)
+    page.fill("#login-password", old_password)
+    page.click("#login-btn")
+    expect(page.locator("#alert-error")).to_be_visible(timeout=8000)
+    
+    # Log in with the NEW password
+    page.fill("#login-password", new_password)
+    page.click("#login-btn")
+    page.wait_for_url(BASE_URL + "/", timeout=8000)
+    
+    token = page.evaluate("() => localStorage.getItem('auth_token')")
+    assert token is not None, "Login with new password failed"

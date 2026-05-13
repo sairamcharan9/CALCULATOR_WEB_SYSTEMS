@@ -15,8 +15,8 @@ from sqlalchemy.exc import IntegrityError
 
 from app.api.database import get_db
 from app.api.models import User
-from app.api.schemas import UserCreate, UserLogin, UserRead, Token
-from app.api.security import hash_password, verify_password, create_access_token
+from app.api.schemas import UserCreate, UserLogin, UserRead, Token, UserProfilePatch, UserPasswordPatch
+from app.api.security import hash_password, verify_password, create_access_token, get_current_user
 
 logger = logging.getLogger(__name__)
 
@@ -101,3 +101,55 @@ def get_user(user_id: int, db: Session = Depends(get_db)):
 def list_users(db: Session = Depends(get_db)):
     """Retrieve all users."""
     return db.query(User).all()
+
+
+@router.put("/me/profile", response_model=UserRead)
+def update_profile(
+    payload: UserProfilePatch,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Update profile information for the authenticated user."""
+    if payload.username:
+        # Check if username exists
+        existing = db.query(User).filter(User.username == payload.username, User.id != current_user.id).first()
+        if existing:
+            raise HTTPException(status_code=400, detail="Username already taken.")
+        current_user.username = payload.username
+        
+    if payload.email:
+        existing = db.query(User).filter(User.email == payload.email, User.id != current_user.id).first()
+        if existing:
+            raise HTTPException(status_code=400, detail="Email already taken.")
+        current_user.email = payload.email
+
+    try:
+        db.commit()
+        db.refresh(current_user)
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(status_code=400, detail="Database integrity error.")
+        
+    return current_user
+
+
+@router.put("/me/password")
+def change_password(
+    payload: UserPasswordPatch,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Securely change the password of the authenticated user."""
+    if not verify_password(payload.current_password, current_user.password_hash):
+        raise HTTPException(status_code=400, detail="Incorrect current password.")
+
+    if len(payload.new_password) < 8:
+        raise HTTPException(status_code=400, detail="New password must be at least 8 characters long.")
+
+    current_user.password_hash = hash_password(payload.new_password)
+    
+    db.commit()
+    db.refresh(current_user)
+    
+    return {"message": "Password successfully updated. Please log in again."}
+
