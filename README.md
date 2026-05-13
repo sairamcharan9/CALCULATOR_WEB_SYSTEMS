@@ -17,6 +17,10 @@ A professional-grade, dual-mode Calculator built in Python featuring a full **CL
 ![CalcBREAD Dashboard & History](image%20copy.png)
 *(Above: The robust interactive history dashboard allowing real-time browsing, detailed inspection, inline editing, and deletion of user calculations via fully integrated BREAD endpoints.)*
 
+### 🧬 Custom Formulae & Macros Builder (Premium Upgrade)
+![Custom Formulae & Macros Tab](image%20copy%204.png)
+*(Above: The premium visual custom macro interface enabling inline formula testing, dynamic key bindings, duplicate protection guards, and native logging of compound macro expressions directly into the calculation history.)*
+
 ### Authentication Interfaces (Login & Registration)
 
 | **Secure Login View** | **User Registration View** |
@@ -31,12 +35,13 @@ A professional-grade, dual-mode Calculator built in Python featuring a full **CL
 - **Dual Interaction Modes** — FastAPI SPA and interactive CLI REPL
 - **Modular Architecture** — Clean sub-package layout (`app/core`, `app/cli`, `app/api`)
 - **10 Arithmetic Operations** — Add, Subtract, Multiply, Divide, Power, Root, Modulus, Int Divide, Percent, Abs Diff
-- **Persistent History** — Pandas DataFrame backed by `data/history.csv`; full Undo/Redo via Memento pattern
+- **Dynamic Formula Macros Engine** — Recursive descent parser mapping multi-variable macros with full UI builder & pure CLI compatibility
+- **Persistent History** — Pandas DataFrame backed by `data/history.csv` & multi-user SQL tables; full Undo/Redo via Memento pattern
 - **Memory Commands** — Store, Recall, Clear named memory slots
 - **JWT Authentication** — `/register` + `/login` with bcrypt hashing, `python-jose` JWT (HS256), localStorage token storage
-- **Calculation BREAD API** — Browse, Read, Edit, Add, Delete calculation records
+- **Calculation BREAD API** — Browse, Read, Edit, Add, Delete calculation records with automated macro log insertion
 - **Design Patterns** — Factory, Command, Strategy, Observer, Memento, Facade, Singleton, Plugin
-- **288 Tests, 90%+ Coverage** — Unit, CLI, FastAPI integration, and Playwright E2E tests
+- **305 Tests, 90%+ Coverage** — Unit, CLI, FastAPI integration, and Playwright E2E tests passing cleanly
 - **CI/CD** — GitHub Actions → Docker Hub on every push to `main`
 - **Containerized** — Docker + Docker Compose (FastAPI + PostgreSQL)
 
@@ -142,6 +147,12 @@ Recalled A: 999
 >>> undo
 Undo successful. 1 calculation(s) remaining.
 
+>>> macro add(power(a, 2), power(b, 2)) a=3 b=4
+Result: 25
+
+>>> macro root(add(power(a, 2), power(b, 2)), 2) a=6 b=8
+Result: 10
+
 >>> exit
 Goodbye!
 ```
@@ -209,7 +220,7 @@ pytest tests/unit tests/fastapi/integration tests/cli \
        --cov=app --cov=main --cov-report=term-missing
 ```
 
-**Current test results: 288 passed across all suites.**
+**Current test results: 305 passed across all suites.**
 
 ---
 
@@ -345,4 +356,4 @@ CALCULATOR_WEB_SYSTEMS/
 
 ---
 
-*Production-ready FastAPI calculator demonstrating enterprise Python architecture — SOLID principles, 10 design patterns, JWT authentication, 288+ automated tests, full CI/CD pipeline.*
+*Production-ready FastAPI calculator demonstrating enterprise Python architecture — SOLID principles, 10 design patterns, JWT authentication, 305+ automated tests, full CI/CD pipeline.*

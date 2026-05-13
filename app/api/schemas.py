@@ -133,3 +133,31 @@ class CalculationRead(BaseModel):
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+
+# ---------------------------------------------------------------------------
+# Custom Formula (Macro) Schemas
+# ---------------------------------------------------------------------------
+
+class CustomFormulaCreate(BaseModel):
+    """Schema for creating a new custom formula macro."""
+    name: str
+    expression: str
+
+
+class CustomFormulaRead(BaseModel):
+    """Schema for returning custom formula macro records in API responses."""
+    id: int
+    name: str
+    expression: str
+    user_id: int
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class MacroExecuteRequest(BaseModel):
+    """Schema for executing a macro dynamically."""
+    expression: Optional[str] = None
+    macro_id: Optional[int] = None
+    variables: dict[str, float] = {}
