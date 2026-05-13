@@ -27,7 +27,7 @@ class Calculation(Command):  # Inherit from Command
         "multiply": "*",
         "divide": "/",
         "power": "^",
-        "root": "√",
+        "root": "root",
         "modulus": "%",
         "int_divide": "//",
         "percent": "%%",

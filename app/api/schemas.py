@@ -45,6 +45,19 @@ class Token(BaseModel):
     token_type: str = "bearer"
 
 
+class UserProfilePatch(BaseModel):
+    """Schema for updating user profile info."""
+    username: Optional[str] = None
+    email: Optional[EmailStr] = None
+
+
+class UserPasswordPatch(BaseModel):
+    """Schema for updating user password."""
+    current_password: str
+    new_password: str
+
+
+
 
 # ---------------------------------------------------------------------------
 # Calculation Schemas
@@ -56,6 +69,8 @@ class OperationType(str, Enum):
     MULTIPLY = "MULTIPLY"
     DIVIDE = "DIVIDE"
     INT_DIVIDE = "INT_DIVIDE"
+    POWER = "POWER"
+    MODULUS = "MODULUS"
 
 
 class CalculationCreate(BaseModel):
