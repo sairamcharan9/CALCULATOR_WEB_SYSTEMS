@@ -285,11 +285,7 @@
             </button>
         </form>
 
-        <!-- Token preview (shown after successful login) -->
-        <div class="token-display" id="token-display">
-            <div class="token-label">🔑 JWT Access Token (stored in localStorage)</div>
-            <div class="token-value" id="token-value"></div>
-        </div>
+
 
         <div class="divider">
             Don't have an account? <a href="/register">Register</a>
@@ -306,8 +302,6 @@
         const submitBtn = document.getElementById('login-btn');
         const alertSuccess = document.getElementById('alert-success');
         const alertError = document.getElementById('alert-error');
-        const tokenDisplay = document.getElementById('token-display');
-        const tokenValue = document.getElementById('token-value');
 
         // ── Helpers ────────────────────────────────────────────────────────
         function showError(inputEl, errorId) {
@@ -374,7 +368,6 @@
 
             submitBtn.disabled = true;
             submitBtn.innerHTML = '<span class="spinner"></span>Signing in…';
-            tokenDisplay.classList.remove('visible');
 
             try {
                 const response = await fetch('/users/login', {
@@ -389,16 +382,8 @@
                     // Store JWT in localStorage
                     localStorage.setItem('auth_token', data.access_token);
 
-                    showAlert('success', `✅ Signed in successfully! Your session is active.`);
-
-                    // Show truncated token preview
-                    const preview = data.access_token.substring(0, 60) + '…';
-                    tokenValue.textContent = preview;
-                    tokenDisplay.classList.add('visible');
-
-                    // Redirect to calculator after 2s
-                    setTimeout(() => { window.location.href = '/'; }, 2000);
-
+                    // Redirect to calculator instantly
+                    window.location.replace('/');
                 } else if (response.status === 401) {
                     // Invalid credentials — display UI error
                     showAlert('error', '❌ Invalid credentials. Please check your username and password.');
@@ -419,8 +404,7 @@
         // ── Check for existing token ───────────────────────────────────────
         const existingToken = localStorage.getItem('auth_token');
         if (existingToken) {
-            showAlert('success', '✅ You are already signed in. Redirecting…');
-            setTimeout(() => { window.location.href = '/'; }, 1500);
+            window.location.replace('/');
         }
     </script>
 </body>

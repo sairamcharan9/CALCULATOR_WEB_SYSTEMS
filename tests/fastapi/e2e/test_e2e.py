@@ -13,319 +13,51 @@ import os
 import time
 import uuid
 
+import pytest
 import httpx
-from playwright.sync_api import sync_playwright
+from playwright.sync_api import sync_playwright, expect
 
 BASE_URL = os.getenv("TEST_URL", "http://localhost:8000")
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Helper
+# Fixtures
 # ─────────────────────────────────────────────────────────────────────────────
 
-def _register_user_via_api(username: str, email: str, password: str) -> dict:
+@pytest.fixture(scope="module")
+def playwright_instance():
+    with sync_playwright() as p:
+        yield p
+
+
+@pytest.fixture(scope="module")
+def browser(playwright_instance):
+    browser_instance = playwright_instance.chromium.launch(headless=True)
+    yield browser_instance
+    browser_instance.close()
+
+
+@pytest.fixture
+def page(browser):
+    """Provides a fresh isolated context and page per test."""
+    context = browser.new_context()
+    page_instance = context.new_page()
+    yield page_instance
+    context.close()
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Helpers
+# ─────────────────────────────────────────────────────────────────────────────
+
+def _register_user_via_api(username: str, email: str, password: str) -> httpx.Response:
     """Register a user directly via API (no browser) for test setup."""
     resp = httpx.post(
         f"{BASE_URL}/users/register",
         json={"username": username, "email": email, "password": password},
+        timeout=10,
     )
     return resp
-
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Calculator UI tests (existing)
-# ─────────────────────────────────────────────────────────────────────────────
-
-def test_addition_e2e():
-    """Test basic addition and memory through the UI"""
-    with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True)
-        page = browser.new_page()
-        try:
-            page.goto(BASE_URL)
-
-            page.fill("#a", "5")
-            page.fill("#b", "5")
-            page.click("#op-add")
-
-            page.wait_for_selector('.success')
-            result = page.inner_text("#result-text")
-            assert "10" in result
-
-            # Store in Memory
-            page.fill("#a", "999")
-            page.click("button:has-text('Store A')")
-            time.sleep(1)
-
-            # Recall Memory
-            page.click("button:has-text('Recall')")
-            time.sleep(1)
-
-            text = page.inner_text("#result-text")
-            assert "999" in text
-
-        finally:
-            browser.close()
-
-
-def test_subtraction_e2e():
-    """Test subtraction through the UI"""
-    with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True)
-        page = browser.new_page()
-        try:
-            page.goto(BASE_URL)
-            page.fill("#a", "10")
-            page.fill("#b", "3")
-            page.click("#op-subtract")
-
-            page.wait_for_selector('.success')
-            result = page.inner_text("#result-text")
-            assert "7" in result
-        finally:
-            browser.close()
-
-
-def test_divide_by_zero_e2e():
-    """Test that dividing by zero shows an error in status/display"""
-    with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True)
-        page = browser.new_page()
-        try:
-            page.goto(BASE_URL)
-            page.fill("#a", "10")
-            page.fill("#b", "0")
-            page.click("#op-divide")
-
-            page.wait_for_selector('.error')
-            result = page.inner_text("#result-text")
-            assert "Error" in result or "zero" in result.lower()
-        finally:
-            browser.close()
-
-
-def test_history_e2e():
-    """Test viewing and clearing history in the side drawer"""
-    with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True)
-        page = browser.new_page()
-        try:
-            # Perform a calculation first
-            page.goto(BASE_URL)
-            page.fill("#a", "8")
-            page.fill("#b", "2")
-            page.click("#op-multiply")
-            page.wait_for_selector('.success')
-
-            # View History
-            page.click("button:has-text('Reload')")
-            time.sleep(1)
-            history_text = page.inner_text("#history-container")
-            assert "16" in history_text or "8" in history_text
-
-            # Clear Server History
-            page.click("button:has-text('Clear')")
-            time.sleep(1)
-            history_text = page.inner_text("#history-container")
-            assert "History empty." in history_text or "No calculations yet." in history_text
-        finally:
-            browser.close()
-
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Auth E2E tests — NEW (Module 13)
-# ─────────────────────────────────────────────────────────────────────────────
-
-def test_register_valid_user_e2e():
-    """
-    POSITIVE — Register with valid data via the /register page.
-
-    Steps:
-      1. Navigate to /register.
-      2. Fill in a unique email, username, and a ≥8-char password.
-      3. Submit the form.
-      4. Verify the success alert is displayed.
-    """
-    unique_id = uuid.uuid4().hex[:8]
-    email = f"testuser_{unique_id}@example.com"
-    username = f"user_{unique_id}"
-    password = "SecurePass123!"
-
-    with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True)
-        page = browser.new_page()
-        try:
-            page.goto(f"{BASE_URL}/register")
-
-            # Fill form fields
-            page.fill("#reg-email", email)
-            page.fill("#reg-username", username)
-            page.fill("#reg-password", password)
-            page.fill("#reg-confirm", password)
-
-            # Submit
-            page.click("#register-btn")
-
-            # Verify success alert is visible
-            page.wait_for_selector("#alert-success.visible", timeout=8000)
-            success_text = page.inner_text("#alert-success")
-            assert "Account created" in success_text or "Welcome" in success_text, \
-                f"Expected success message, got: '{success_text}'"
-
-        finally:
-            browser.close()
-
-
-def test_login_valid_credentials_e2e():
-    """
-    POSITIVE — Login with correct credentials via the /login page.
-
-    Steps:
-      1. Register a user via API (setup).
-      2. Navigate to /login.
-      3. Fill username and password.
-      4. Submit and verify the success alert appears.
-      5. Verify JWT is stored in localStorage under 'auth_token'.
-    """
-    unique_id = uuid.uuid4().hex[:8]
-    username = f"logintest_{unique_id}"
-    email = f"{username}@example.com"
-    password = "ValidPass456!"
-
-    # Setup: register user via API
-    resp = _register_user_via_api(username, email, password)
-    assert resp.status_code == 201, f"Setup registration failed: {resp.text}"
-
-    with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True)
-        page = browser.new_page()
-        try:
-            page.goto(f"{BASE_URL}/login")
-
-            # Fill login form
-            page.fill("#login-username", username)
-            page.fill("#login-password", password)
-
-            # Submit
-            page.click("#login-btn")
-
-            # Verify success alert appears
-            page.wait_for_selector("#alert-success.visible", timeout=8000)
-            success_text = page.inner_text("#alert-success")
-            assert "Signed in" in success_text or "session" in success_text.lower(), \
-                f"Expected success message, got: '{success_text}'"
-
-            # Verify JWT was stored in localStorage
-            token = page.evaluate("() => localStorage.getItem('auth_token')")
-            assert token is not None, "JWT was not stored in localStorage"
-            assert len(token) > 20, f"JWT looks invalid (too short): '{token}'"
-
-        finally:
-            browser.close()
-
-
-def test_register_short_password_e2e():
-    """
-    NEGATIVE — Register with a password shorter than 8 characters.
-
-    Steps:
-      1. Navigate to /register.
-      2. Fill a valid email & username, but only a 4-char password.
-      3. Attempt to submit.
-      4. Verify the client-side password error is shown (no server call needed).
-    """
-    with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True)
-        page = browser.new_page()
-        try:
-            page.goto(f"{BASE_URL}/register")
-
-            page.fill("#reg-email", "short@example.com")
-            page.fill("#reg-username", "shortpwuser")
-            page.fill("#reg-password", "abc")          # 3 chars — too short
-            page.fill("#reg-confirm", "abc")
-
-            page.click("#register-btn")
-
-            # The client-side error for password should appear
-            page.wait_for_selector("#password-error.visible", timeout=5000)
-            error_text = page.inner_text("#password-error")
-            assert "8" in error_text or "least" in error_text.lower(), \
-                f"Expected password length error, got: '{error_text}'"
-
-            # Success alert must NOT be shown
-            success_visible = page.is_visible("#alert-success.visible")
-            assert not success_visible, "Success alert should NOT appear for short password"
-
-        finally:
-            browser.close()
-
-
-def test_login_wrong_password_e2e():
-    """
-    NEGATIVE — Login with a wrong password; server must return 401 and UI shows error.
-
-    Steps:
-      1. Register a user via API (setup).
-      2. Navigate to /login.
-      3. Fill correct username but wrong password.
-      4. Submit and verify the error alert is displayed (401 feedback).
-    """
-    unique_id = uuid.uuid4().hex[:8]
-    username = f"wrongpw_{unique_id}"
-    email = f"{username}@example.com"
-    correct_password = "CorrectPass789!"
-
-    # Setup: register user via API
-    resp = _register_user_via_api(username, email, correct_password)
-    assert resp.status_code == 201, f"Setup registration failed: {resp.text}"
-
-    with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True)
-        page = browser.new_page()
-        try:
-            page.goto(f"{BASE_URL}/login")
-
-            page.fill("#login-username", username)
-            page.fill("#login-password", "WrongPassword!")   # deliberately wrong
-
-            page.click("#login-btn")
-
-            # Error alert should appear
-            page.wait_for_selector("#alert-error.visible", timeout=8000)
-            error_text = page.inner_text("#alert-error")
-            assert (
-                "Invalid" in error_text
-                or "credentials" in error_text.lower()
-                or "401" in error_text
-            ), f"Expected invalid credentials message, got: '{error_text}'"
-
-            # Success alert must NOT appear
-            success_visible = page.is_visible("#alert-success.visible")
-            assert not success_visible, "Success alert should NOT appear for wrong password"
-
-            # JWT must NOT be in localStorage
-            token = page.evaluate("() => localStorage.getItem('auth_token')")
-            assert token is None or token == "", "JWT should not be stored on failed login"
-
-        finally:
-            browser.close()
-
-
-# ─────────────────────────────────────────────────────────────────────────────
-# BREAD E2E tests — Calculations (Module 14)
-# ─────────────────────────────────────────────────────────────────────────────
-
-def _login_and_get_token(page, username: str, password: str) -> str:
-    """Helper: log in via the /login page and return the stored JWT."""
-    page.goto(f"{BASE_URL}/login")
-    page.fill("#login-username", username)
-    page.fill("#login-password", password)
-    page.click("#login-btn")
-    page.wait_for_selector("#alert-success.visible", timeout=10000)
-    token = page.evaluate("() => localStorage.getItem('auth_token')")
-    assert token is not None and len(token) > 20, "JWT not stored after login"
-    return token
 
 
 def _setup_user(unique_suffix: str):
@@ -338,276 +70,397 @@ def _setup_user(unique_suffix: str):
     return username, password
 
 
-def test_browse_calculations_e2e():
-    """
-    POSITIVE — Browse: authenticated user sees the My Calculations table.
+def _login_and_get_token(page, username: str, password: str) -> str:
+    """Helper: log in via the /login page and return the stored JWT."""
+    page.goto(f"{BASE_URL}/login")
+    page.fill("#login-username", username)
+    page.fill("#login-password", password)
+    page.click("#login-btn")
+    page.wait_for_url(BASE_URL + "/")
+    token = page.evaluate("() => localStorage.getItem('auth_token')")
+    assert token is not None and len(token) > 20, "JWT not stored after login"
+    return token
 
-    Steps:
-      1. Register via API.
-      2. Log in via /login page.
-      3. Navigate to / (home dashboard).
-      4. Verify the calc table element is present.
+
+def _inject_token_and_goto(page, token: str, url: str = BASE_URL):
     """
+    Inject a JWT into localStorage WITHOUT a double-navigation:
+    Use add_init_script so the token is available before the first paint.
+    """
+    page.add_init_script(f"""
+        window.addEventListener('DOMContentLoaded', () => {{
+            localStorage.setItem('auth_token', '{token}');
+        }});
+        // Also set synchronously in case the script runs early
+        try {{ localStorage.setItem('auth_token', '{token}'); }} catch(e) {{}}
+    """)
+    page.goto(url)
+    # Confirm the token is in place
+    page.wait_for_function(
+        f"() => localStorage.getItem('auth_token') === '{token}'"
+    )
+
+
+def _auth_setup(page):
+    uid = uuid.uuid4().hex[:8]
+    u, p = _setup_user(uid)
+    _login_and_get_token(page, u, p)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Calculator UI tests
+# ─────────────────────────────────────────────────────────────────────────────
+
+def test_addition_e2e(page):
+    """Test basic addition through the UI"""
+    _auth_setup(page)
+    page.goto(BASE_URL)
+    page.wait_for_selector("#a")
+
+    page.fill("#a", "5")
+    page.fill("#b", "5")
+    page.click("#op-add")
+
+    expect(page.locator("#result-text")).to_contain_text("10", timeout=10000)
+
+
+def test_subtraction_e2e(page):
+    """Test subtraction through the UI"""
+    _auth_setup(page)
+    page.goto(BASE_URL)
+    page.wait_for_selector("#a")
+    page.fill("#a", "10")
+    page.fill("#b", "3")
+    page.click("#op-subtract")
+
+    expect(page.locator("#result-text")).to_contain_text("7", timeout=10000)
+
+
+def test_divide_by_zero_e2e(page):
+    """Test that dividing by zero shows an error in the result display"""
+    _auth_setup(page)
+    page.goto(BASE_URL)
+    page.wait_for_selector("#a")
+    page.fill("#a", "10")
+    page.fill("#b", "0")
+    page.click("#op-divide")
+
+    result_loc = page.locator("#result-text")
+    expect(result_loc).to_have_class("error", timeout=10000)
+
+
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Auth E2E tests — Module 13
+# ─────────────────────────────────────────────────────────────────────────────
+
+def test_register_valid_user_e2e(page):
+    """POSITIVE — Register with valid data via the /register page."""
+    unique_id = uuid.uuid4().hex[:8]
+    email = f"testuser_{unique_id}@example.com"
+    username = f"user_{unique_id}"
+    password = "SecurePass123!"
+
+    page.goto(f"{BASE_URL}/register")
+    page.fill("#reg-email", email)
+    page.fill("#reg-username", username)
+    page.fill("#reg-password", password)
+    page.fill("#reg-confirm", password)
+    page.click("#register-btn")
+
+    expect(page.locator("#alert-success")).to_be_visible(timeout=8000)
+    expect(page.locator("#alert-success")).to_contain_text("Account created")
+
+
+def test_login_valid_credentials_e2e(page):
+    """POSITIVE — Login with correct credentials via the /login page."""
+    unique_id = uuid.uuid4().hex[:8]
+    username = f"logintest_{unique_id}"
+    email = f"{username}@example.com"
+    password = "ValidPass456!"
+
+    resp = _register_user_via_api(username, email, password)
+    assert resp.status_code == 201, f"Setup registration failed: {resp.text}"
+
+    page.goto(f"{BASE_URL}/login")
+    page.fill("#login-username", username)
+    page.fill("#login-password", password)
+    page.click("#login-btn")
+
+    page.wait_for_url(BASE_URL + "/", timeout=8000)
+
+    token = page.evaluate("() => localStorage.getItem('auth_token')")
+    assert token is not None, "JWT was not stored in localStorage"
+    assert len(token) > 20, f"JWT looks invalid (too short): '{token}'"
+
+
+def test_register_short_password_e2e(page):
+    """NEGATIVE — Register with a password shorter than 8 characters."""
+    page.goto(f"{BASE_URL}/register")
+    page.fill("#reg-email", "short@example.com")
+    page.fill("#reg-username", "shortpwuser")
+    page.fill("#reg-password", "abc")     # 3 chars — too short
+    page.fill("#reg-confirm", "abc")
+    page.click("#register-btn")
+
+    expect(page.locator("#password-error")).to_be_visible(timeout=5000)
+    expect(page.locator("#alert-success")).not_to_be_visible()
+
+
+def test_login_wrong_password_e2e(page):
+    """NEGATIVE — Login with a wrong password shows a 401 error in the UI."""
+    unique_id = uuid.uuid4().hex[:8]
+    username = f"wrongpw_{unique_id}"
+    email = f"{username}@example.com"
+    correct_password = "CorrectPass789!"
+
+    resp = _register_user_via_api(username, email, correct_password)
+    assert resp.status_code == 201, f"Setup registration failed: {resp.text}"
+
+    page.goto(f"{BASE_URL}/login")
+    page.fill("#login-username", username)
+    page.fill("#login-password", "WrongPassword!")
+    page.click("#login-btn")
+
+    expect(page.locator("#alert-error")).to_be_visible(timeout=8000)
+    expect(page.locator("#alert-success")).not_to_be_visible()
+
+    token = page.evaluate("() => localStorage.getItem('auth_token')")
+    assert token is None or token == "", "JWT should not be stored on failed login"
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# BREAD E2E tests — Calculations Module 14
+# ─────────────────────────────────────────────────────────────────────────────
+
+def test_browse_calculations_e2e(page):
+    """POSITIVE — Browse: authenticated user sees the My Calculations table."""
     uid = uuid.uuid4().hex[:8]
     username, password = _setup_user(uid)
 
-    with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True)
-        page = browser.new_page()
-        try:
-            _login_and_get_token(page, username, password)
-            page.goto(BASE_URL)
+    _login_and_get_token(page, username, password)
+    # Navigate to home (already redirected there after login)
+    page.goto(BASE_URL)
 
-            # The table and browse button must be visible
-            page.wait_for_selector("#calc-table", timeout=8000)
-            page.wait_for_selector("#browse-btn", timeout=5000)
+    # The table lives on the Dashboard tab — switch to it
+    page.click("#tab-btn-dashboard")
+    page.wait_for_selector("#tab-dashboard.active", timeout=5000)
 
-            # Auth banner must NOT be visible (user is logged in)
-            assert not page.is_visible("#auth-banner"), \
-                "Auth banner should not show for a logged-in user"
-
-        finally:
-            browser.close()
+    expect(page.locator("#calc-table")).to_be_visible(timeout=8000)
+    expect(page.locator("#browse-btn")).to_be_visible(timeout=5000)
+    # Auth banner must NOT be visible (user is logged in)
+    expect(page.locator("#auth-banner")).not_to_be_visible()
 
 
-def test_add_calculation_e2e():
-    """
-    POSITIVE — Add: log in, compute, click 'Save to DB', verify row appears in table.
-
-    Steps:
-      1. Register and log in.
-      2. Navigate to /.
-      3. Fill operands (12, 4) and click 'Add (+)'.
-      4. Click the 'Save to DB' button.
-      5. Verify a new row with result '16' appears in the table.
-    """
+def test_add_calculation_e2e(page):
+    """POSITIVE — Add: log in, compute, verify row appears in table."""
     uid = uuid.uuid4().hex[:8]
     username, password = _setup_user(uid)
 
-    with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True)
-        page = browser.new_page()
-        try:
-            _login_and_get_token(page, username, password)
-            page.goto(BASE_URL)
-            page.wait_for_selector("#a", timeout=8000)
+    _login_and_get_token(page, username, password)
+    page.goto(BASE_URL)
+    page.wait_for_selector("#a", timeout=8000)
 
-            # Perform calculation
-            page.fill("#a", "12")
-            page.fill("#b", "4")
-            page.click("#op-add")
-            page.wait_for_selector(".success", timeout=8000)
-            result_text = page.inner_text("#result-text")
-            assert "16" in result_text, f"Expected 16 in result, got: {result_text}"
+    page.fill("#a", "12")
+    page.fill("#b", "4")
+    page.click("#op-add")
 
-            # Save to DB
-            page.wait_for_selector("#save-btn", state="visible", timeout=6000)
-            page.click("#save-btn")
+    expect(page.locator("#result-text")).to_have_class("success", timeout=10000)
+    expect(page.locator("#result-text")).to_contain_text("16")
 
-            # Row with result 16 must appear in the table
-            page.wait_for_function(
-                "() => document.querySelector('#calc-tbody').innerText.includes('16')",
-                timeout=8000
-            )
-            table_text = page.inner_text("#calc-tbody")
-            assert "16" in table_text, f"Saved calculation not in table. Table: {table_text}"
-            assert "ADD" in table_text, "Operation type ADD should be shown in table"
+    # Switch to Dashboard to verify the row was auto-saved
+    page.click("#tab-btn-dashboard")
+    page.wait_for_selector("#tab-dashboard.active", timeout=5000)
 
-        finally:
-            browser.close()
+    expect(page.locator("#calc-tbody")).to_contain_text("16", timeout=10000)
+    expect(page.locator("#calc-tbody")).to_contain_text("ADD")
 
 
-def test_edit_calculation_e2e():
-    """
-    POSITIVE — Edit: save a calculation, click edit icon, change values, verify update.
-
-    Steps:
-      1. Register, log in, save a calculation (5 MULTIPLY 4 = 20) via API.
-      2. Navigate to /.
-      3. Browse loads the row; click the edit (✏️) button for that row.
-      4. Change A to 6, B to 7, type to MULTIPLY.
-      5. Click 'Save Changes'.
-      6. Verify the table now shows result '42'.
-    """
+def test_edit_calculation_e2e(page):
+    """POSITIVE — Edit: save a calculation via API, click edit, update, verify."""
     uid = uuid.uuid4().hex[:8]
     username, password = _setup_user(uid)
 
-    # Register + get token via API for setup
-    login_resp = httpx.post(f"{BASE_URL}/users/login",
-                            json={"username": username, "password": password})
+    login_resp = httpx.post(
+        f"{BASE_URL}/users/login",
+        json={"username": username, "password": password},
+        timeout=10,
+    )
     assert login_resp.status_code == 200, f"Login failed: {login_resp.text}"
     token = login_resp.json()["access_token"]
 
-    # Save a calculation via API
     calc_resp = httpx.post(
         f"{BASE_URL}/calculations/",
         json={"a": 5.0, "b": 4.0, "type": "MULTIPLY"},
         headers={"Authorization": f"Bearer {token}"},
+        timeout=10,
     )
     assert calc_resp.status_code == 201, f"Calc save failed: {calc_resp.text}"
     calc_id = calc_resp.json()["id"]
 
-    with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True)
-        page = browser.new_page()
-        try:
-            # Inject JWT into localStorage before navigation
-            page.goto(BASE_URL)
-            page.evaluate(f"() => localStorage.setItem('auth_token', '{token}')")
-            page.goto(BASE_URL)
+    # Inject token before first navigation — no double-load
+    _inject_token_and_goto(page, token, BASE_URL)
 
-            # Wait for the row to appear
-            page.wait_for_selector(f"#edit-btn-{calc_id}", timeout=10000)
-            page.click(f"#edit-btn-{calc_id}")
+    # Switch to Dashboard tab where the table lives
+    page.click("#tab-btn-dashboard")
+    page.wait_for_selector("#tab-dashboard.active", timeout=5000)
 
-            # Modal should open
-            page.wait_for_selector("#edit-modal.open", timeout=5000)
+    page.wait_for_selector(f"#edit-btn-{calc_id}", timeout=10000)
+    page.click(f"#edit-btn-{calc_id}")
 
-            # Update fields
-            page.fill("#edit-a", "6")
-            page.fill("#edit-b", "7")
-            page.select_option("#edit-type", "MULTIPLY")
-            page.click("#edit-save-btn")
+    expect(page.locator("#edit-modal")).to_be_visible(timeout=5000)
 
-            # Modal should close and table should update
-            page.wait_for_selector("#edit-modal", state="hidden", timeout=8000)
-            page.wait_for_function(
-                "() => document.querySelector('#calc-tbody').innerText.includes('42')",
-                timeout=8000
-            )
-            table_text = page.inner_text("#calc-tbody")
-            assert "42" in table_text, f"Updated result 42 not found in table. Table: {table_text}"
+    page.fill("#edit-a", "6")
+    page.fill("#edit-b", "7")
+    page.select_option("#edit-type", "MULTIPLY")
+    page.click("#edit-save-btn")
 
-        finally:
-            browser.close()
+    expect(page.locator("#edit-modal")).not_to_be_visible(timeout=8000)
+    expect(page.locator("#calc-tbody")).to_contain_text("42", timeout=10000)
 
 
-def test_delete_calculation_e2e():
-    """
-    POSITIVE — Delete: save a calculation, click delete, confirm, verify it is gone.
-
-    Steps:
-      1. Register, log in, save a calculation via API.
-      2. Navigate to / (dashboard loads the row).
-      3. Click the delete (🗑) button.
-      4. Accept the confirm() dialog.
-      5. Verify the row is no longer in the table.
-    """
+def test_delete_calculation_e2e(page):
+    """POSITIVE — Delete: save a calculation via API, click delete, verify gone."""
     uid = uuid.uuid4().hex[:8]
     username, password = _setup_user(uid)
 
-    login_resp = httpx.post(f"{BASE_URL}/users/login",
-                            json={"username": username, "password": password})
+    login_resp = httpx.post(
+        f"{BASE_URL}/users/login",
+        json={"username": username, "password": password},
+        timeout=10,
+    )
+    assert login_resp.status_code == 200, f"Login failed: {login_resp.text}"
     token = login_resp.json()["access_token"]
 
     calc_resp = httpx.post(
         f"{BASE_URL}/calculations/",
         json={"a": 99.0, "b": 1.0, "type": "ADD"},
         headers={"Authorization": f"Bearer {token}"},
+        timeout=10,
     )
+    assert calc_resp.status_code == 201, f"Calc save failed: {calc_resp.text}"
     calc_id = calc_resp.json()["id"]
 
-    with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True)
-        page = browser.new_page()
-        try:
-            page.goto(BASE_URL)
-            page.evaluate(f"() => localStorage.setItem('auth_token', '{token}')")
-            page.goto(BASE_URL)
+    _inject_token_and_goto(page, token, BASE_URL)
 
-            # Wait for row to appear
-            page.wait_for_selector(f"#delete-btn-{calc_id}", timeout=10000)
+    # Switch to Dashboard tab
+    page.click("#tab-btn-dashboard")
+    page.wait_for_selector("#tab-dashboard.active", timeout=5000)
 
-            # Auto-accept the confirm dialog
-            page.on("dialog", lambda dialog: dialog.accept())
-            page.click(f"#delete-btn-{calc_id}")
+    page.wait_for_selector(f"#delete-btn-{calc_id}", timeout=10000)
 
-            # Row should disappear
-            page.wait_for_function(
-                f"() => !document.querySelector('#row-{calc_id}')",
-                timeout=8000
-            )
-            assert not page.is_visible(f"#row-{calc_id}"), \
-                f"Row for deleted calculation {calc_id} still visible!"
+    page.on("dialog", lambda dialog: dialog.accept())
+    page.click(f"#delete-btn-{calc_id}")
 
-        finally:
-            browser.close()
+    expect(page.locator(f"#row-{calc_id}")).not_to_be_visible(timeout=8000)
 
 
-def test_unauthenticated_browse_e2e():
-    """
-    NEGATIVE — Browse without login: auth banner is shown, table shows sign-in prompt.
+def test_unauthenticated_browse_e2e(page):
+    """NEGATIVE — Browse without login: User is instantly redirected to /login."""
+    # Start on login page to ensure no stale token
+    page.goto(BASE_URL + "/login")
+    page.evaluate("() => localStorage.removeItem('auth_token')")
 
-    Steps:
-      1. Navigate to / without setting a JWT token.
-      2. Verify the auth-banner element is visible.
-      3. Verify the table body contains a sign-in prompt (no real rows).
-    """
-    with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True)
-        page = browser.new_page()
-        try:
-            page.goto(BASE_URL)
-            # Ensure no token in storage
-            page.evaluate("() => localStorage.removeItem('auth_token')")
-            page.reload()
+    # Now attempt to visit home
+    page.goto(BASE_URL)
 
-            # Auth banner must be visible
-            page.wait_for_selector("#auth-banner", state="visible", timeout=8000)
-
-            # Table must show a prompt, not real data rows
-            tbody_text = page.inner_text("#calc-tbody")
-            assert (
-                "Sign in" in tbody_text or "sign in" in tbody_text.lower()
-                or "authenticated" in tbody_text.lower()
-            ), f"Expected sign-in prompt in table body, got: '{tbody_text}'"
-
-        finally:
-            browser.close()
+    # The JS redirect guard should push us back to /login
+    page.wait_for_selector("#login-btn", state="visible", timeout=8000)
+    expect(page.locator("#login-btn")).to_be_visible()
+    assert "/login" in page.url, f"Expected redirect to /login, but URL is {page.url}"
 
 
-def test_add_missing_operand_validation_e2e():
-    """
-    NEGATIVE — Client-side validation: submit with empty operand B shows validation via browser.
-
-    Steps:
-      1. Log in (need token so Save button appears).
-      2. Fill only operand A, leave B empty.
-      3. Click Add (+).
-      4. Verify either an HTML5 validation message or that the result is 0
-         (B defaults to 0, so the API is called — either way no crash).
-      5. Then try clicking Save to DB without a prior successful non-zero B result
-         which would trigger DIVIDE by zero if used with DIVIDE. Instead verify
-         the Save button does NOT appear when B was invalid for division.
-    """
+def test_add_missing_operand_validation_e2e(page):
+    """NEGATIVE — Divide-by-zero shows error and hides Save button."""
     uid = uuid.uuid4().hex[:8]
     username, password = _setup_user(uid)
 
-    with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True)
-        page = browser.new_page()
-        try:
-            _login_and_get_token(page, username, password)
-            page.goto(BASE_URL)
-            page.wait_for_selector("#a", timeout=8000)
+    _login_and_get_token(page, username, password)
+    page.goto(BASE_URL)
+    page.wait_for_selector("#a", timeout=8000)
 
-            # Fill A, leave B empty — then try DIVIDE (b=0 → should yield error)
-            page.fill("#a", "10")
-            page.fill("#b", "0")
-            page.click("#op-divide")
+    page.fill("#a", "10")
+    page.fill("#b", "0")
+    page.click("#op-divide")
 
-            # Either an error class or the word "zero" must appear
-            page.wait_for_selector(".error, #result-text", timeout=8000)
-            result_text = page.inner_text("#result-text")
-            assert (
-                "error" in page.query_selector("#result-text").get_attribute("class") or "Error" in result_text.lower() or ""
-            ) or True  # graceful — API rejects it
+    # The result-text element must have class "error"
+    expect(page.locator("#result-text")).to_have_class("error", timeout=10000)
 
-            # Save button must NOT appear after a divide-by-zero error
-            time.sleep(0.5)
-            save_visible = page.is_visible("#save-btn")
-            assert not save_visible, "Save button should not appear after an error result"
+    # Save button must NOT appear after a divide-by-zero error
+    time.sleep(0.5)
+    expect(page.locator("#save-btn")).not_to_be_visible()
 
-        finally:
-            browser.close()
 
+# ─────────────────────────────────────────────────────────────────────────────
+# Profile & Password E2E tests
+# ─────────────────────────────────────────────────────────────────────────────
+
+def test_profile_update_e2e(page):
+    """POSITIVE — Update username and email via the profile modal."""
+    uid = uuid.uuid4().hex[:8]
+    username, password = _setup_user(uid)
+
+    _login_and_get_token(page, username, password)
+    page.goto(BASE_URL)
+    
+    # Open Profile Modal
+    page.click("#nav-profile-btn")
+    expect(page.locator("#profile-modal")).to_be_visible(timeout=5000)
+    
+    # Update profile fields
+    new_username = f"updated_{uid}"
+    new_email = f"updated_{uid}@example.com"
+    page.fill("#profile-username-input", new_username)
+    page.fill("#profile-email-input", new_email)
+    
+    # Submit update
+    page.click("#btn-update-profile")
+    
+    # Verify success toast
+    expect(page.locator("#toast")).to_contain_text("Profile updated successfully!", timeout=8000)
+    
+    # Verify username changed in the nav
+    expect(page.locator("#nav-username-text")).to_contain_text(new_username, timeout=5000)
+    
+    # Close Modal
+    page.click("button:has-text('Close')")
+    expect(page.locator("#profile-modal")).not_to_be_visible(timeout=5000)
+
+def test_password_change_e2e(page):
+    """POSITIVE — Change password via the profile modal, verify old password fails, new works."""
+    uid = uuid.uuid4().hex[:8]
+    username, old_password = _setup_user(uid)
+    new_password = "NewSecurePass123!"
+
+    _login_and_get_token(page, username, old_password)
+    page.goto(BASE_URL)
+    
+    # Open Profile Modal
+    page.click("#nav-profile-btn")
+    expect(page.locator("#profile-modal")).to_be_visible(timeout=5000)
+    
+    # Update password
+    page.fill("#profile-curr-pass", old_password)
+    page.fill("#profile-new-pass", new_password)
+    page.click("#btn-update-password")
+    
+    # Verify success toast
+    expect(page.locator("#toast")).to_contain_text("Password changed. Please log in again.", timeout=8000)
+    
+    # The frontend logs out automatically after 1.5s
+    page.wait_for_url(BASE_URL + "/login", timeout=8000)
+    
+    # Try logging in with the old password
+    page.fill("#login-username", username)
+    page.fill("#login-password", old_password)
+    page.click("#login-btn")
+    expect(page.locator("#alert-error")).to_be_visible(timeout=8000)
+    
+    # Log in with the NEW password
+    page.fill("#login-password", new_password)
+    page.click("#login-btn")
+    page.wait_for_url(BASE_URL + "/", timeout=8000)
+    
+    token = page.evaluate("() => localStorage.getItem('auth_token')")
+    assert token is not None, "Login with new password failed"

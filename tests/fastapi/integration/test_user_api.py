@@ -234,6 +234,55 @@ class TestListUsers:
         assert response.status_code == 200
         data = response.json()
         assert len(data) == 2
+        assert len(data) == 2
         usernames = {u["username"] for u in data}
         assert usernames == {"user_a", "user_b"}
 
+class TestAdvancedProfile:
+    """Validate Profile updates and Password changes."""
+    
+    def test_update_profile(self):
+        # Register and Login
+        _register(username="mike", email="mike@example.com", password="mikepassword")
+        login_resp = client.post("/users/login", json={"username": "mike", "password": "mikepassword"})
+        token = login_resp.json()["access_token"]
+        headers = {"Authorization": f"Bearer {token}"}
+        
+        resp = client.put(
+            "/users/me/profile",
+            json={"username": "mike_updated", "email": "mike_updated@example.com"},
+            headers=headers
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["username"] == "mike_updated"
+        assert data["email"] == "mike_updated@example.com"
+
+    def test_change_password(self):
+        _register(username="sarah", email="sarah@example.com", password="oldpassword")
+        login_resp = client.post("/users/login", json={"username": "sarah", "password": "oldpassword"})
+        token = login_resp.json()["access_token"]
+        headers = {"Authorization": f"Bearer {token}"}
+        
+        # Change password
+        resp = client.put(
+            "/users/me/password",
+            json={"current_password": "oldpassword", "new_password": "new_secure_password123"},
+            headers=headers
+        )
+        assert resp.status_code == 200
+        
+        # Ensure login works with NEW password
+        new_login = client.post(
+            "/users/login",
+            json={"username": "sarah", "password": "new_secure_password123"}
+        )
+        assert new_login.status_code == 200
+        assert "access_token" in new_login.json()
+        
+        # Ensure login FAILS with OLD password
+        old_login = client.post(
+            "/users/login",
+            json={"username": "sarah", "password": "oldpassword"}
+        )
+        assert old_login.status_code == 401
