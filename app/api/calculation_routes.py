@@ -11,7 +11,12 @@ import logging
 from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
+from sqlalchemy import func
+import io
+import csv
+
 
 from app.api.database import get_db
 from app.api.models import Calculation, CalculationModelFactory, User
@@ -22,6 +27,60 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/calculations", tags=["calculations"])
 
+# ─────────────────────────────────────────────────────────────────────────────
+# Analytics/Stats Dashboard & CSV Export
+# ─────────────────────────────────────────────────────────────────────────────
+
+@router.get("/stats", summary="User Calculation Statistics")
+def get_calculation_stats(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Returns analytics payload for the authenticated user's calculations."""
+    total_count = db.query(func.count(Calculation.id)).filter(Calculation.user_id == current_user.id).scalar() or 0
+    total_sum   = db.query(func.sum(Calculation.result)).filter(Calculation.user_id == current_user.id).scalar() or 0.0
+
+    most_used_op = (
+        db.query(Calculation.type, func.count(Calculation.id).label("count"))
+        .filter(Calculation.user_id == current_user.id)
+        .group_by(Calculation.type)
+        .order_by(func.count(Calculation.id).desc())
+        .first()
+    )
+    
+    return {
+        "total_calculations": total_count,
+        "sum_of_results": total_sum,
+        "favorite_operation": most_used_op[0] if most_used_op else "N/A"
+    }
+
+
+@router.get("/export/csv", summary="Export Calculations to CSV")
+def export_calculations_csv(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Streams a dynamically generated CSV containing all user calculations."""
+    records = (
+        db.query(Calculation)
+        .filter(Calculation.user_id == current_user.id)
+        .order_by(Calculation.id.desc())
+        .all()
+    )
+
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(["ID", "Operand A", "Operand B", "Operation", "Result", "Date"])
+    
+    for r in records:
+        writer.writerow([r.id, r.a, r.b, r.type, r.result, r.created_at.isoformat() if r.created_at else ""])
+
+    output.seek(0)
+    return StreamingResponse(
+        iter([output.getvalue()]),
+        media_type="text/csv",
+        headers={"Content-Disposition": "attachment; filename=my_calculations.csv"}
+    )
 
 # ─────────────────────────────────────────────────────────────────────────────
 # B — Browse: list all calculations for the logged-in user

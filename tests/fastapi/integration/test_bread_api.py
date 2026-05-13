@@ -232,7 +232,7 @@ class TestAdd:
         _user, headers = user_a
         resp = client.post(
             "/calculations/",
-            json={"a": 10.0, "b": 2.0, "type": "POWER"},  # not in OperationType enum
+            json={"a": 10.0, "b": 2.0, "type": "NOT_REAL_OP"},  # not in OperationType enum
             headers=headers,
         )
         assert resp.status_code == 422
@@ -344,3 +344,37 @@ class TestDelete:
     def test_delete_requires_auth(self, saved_calc):
         resp = client.delete(f"/calculations/{saved_calc['id']}")
         assert resp.status_code == 401
+
+
+class TestAdvancedFeatures:
+    """Validate Analytics/Stats and Secure CSV Export endpoints."""
+
+    def test_stats_aggregation(self, user_a):
+        _user, headers = user_a
+        
+        # Create multiple operations to test aggregations
+        client.post("/calculations/", json={"a": 10.0, "b": 2.0, "type": "POWER"}, headers=headers)   # 100
+        client.post("/calculations/", json={"a": 10.0, "b": 3.0, "type": "MODULUS"}, headers=headers) # 1
+        client.post("/calculations/", json={"a": 5.0,  "b": 2.0, "type": "POWER"}, headers=headers)   # 25
+
+        resp = client.get("/calculations/stats", headers=headers)
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["total_calculations"] == 3
+        assert data["sum_of_results"] == 126.0
+        assert data["favorite_operation"] == "POWER"
+
+    def test_csv_export(self, user_a):
+        _user, headers = user_a
+        
+        # Insert a sample calculation
+        client.post("/calculations/", json={"a": 7.0, "b": 3.0, "type": "MODULUS"}, headers=headers)
+
+        resp = client.get("/calculations/export/csv", headers=headers)
+        assert resp.status_code == 200
+        assert resp.headers["content-type"] == "text/csv; charset=utf-8"
+        assert "filename=my_calculations.csv" in resp.headers["content-disposition"]
+        
+        csv_text = resp.text
+        assert "ID,Operand A,Operand B,Operation,Result,Date" in csv_text
+        assert "7.0,3.0,MODULUS,1.0" in csv_text

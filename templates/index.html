@@ -5,30 +5,35 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FastAPI Web Calculator — BREAD Dashboard</title>
     <meta name="description" content="Advanced Web Calculator with persistent calculation history, Browse, Read, Edit, Add and Delete operations.">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-gradient: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
-            --glass-bg: rgba(255, 255, 255, 0.05);
-            --glass-border: rgba(255, 255, 255, 0.1);
-            --text-main: #f0f0f0;
-            --text-muted: #9aa5b4;
-            --btn-accent: #00d2ff;
-            --btn-accent-dark: #0097b2;
-            --input-bg: rgba(0, 0, 0, 0.25);
-            --success: #00e676;
-            --error: #ff4d6d;
-            --warning: #ffb74d;
+            --bg-gradient: radial-gradient(circle at 100% 0%, #2a143a, #050505 50%), radial-gradient(circle at 0% 100%, #102a43, #050505 50%);
+            --glass-bg: rgba(255, 255, 255, 0.02);
+            --glass-border: rgba(255, 255, 255, 0.06);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --btn-accent: #a78bfc;
+            --btn-accent-dark: #7b42f6;
+            --accent-gradient: linear-gradient(135deg, #a78bfc, #e879f9);
+            --input-bg: rgba(0, 0, 0, 0.3);
+            --success: #10b981;
+            --error: #ef4444;
+            --warning: #f59e0b;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {
-            font-family: 'Inter', sans-serif;
-            background: var(--bg-gradient);
+            font-family: 'Outfit', sans-serif;
+            background: #050505;
+            background-image: var(--bg-gradient);
             background-attachment: fixed;
             color: var(--text-main);
-            min-height: 100vh;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
         }
 
         /* ── Nav ── */
@@ -63,26 +68,73 @@
         }
         .btn-nav:hover { background: rgba(255,255,255,0.1); }
         .btn-nav-accent {
-            background: linear-gradient(135deg, var(--btn-accent), var(--btn-accent-dark));
-            color: #0a1628;
-            font-weight: 600;
+            background: var(--accent-gradient);
+            color: #ffffff;
+            font-weight: 700;
             border: none;
+            box-shadow: 0 4px 15px -3px rgba(167, 139, 252, 0.4);
         }
-        .btn-nav-accent:hover { opacity: 0.9; }
+        .btn-nav-accent:hover { transform: translateY(-1px); box-shadow: 0 6px 20px -3px rgba(167, 139, 252, 0.6); }
         #nav-auth-section { display: flex; align-items: center; gap: 10px; }
 
         /* ── Layout ── */
         .page-wrapper {
-            max-width: 1300px;
+            max-width: 1200px;
+            width: 100%;
             margin: 0 auto;
-            padding: 32px 24px 60px;
-            display: grid;
-            grid-template-columns: 460px 1fr;
-            gap: 28px;
+            padding: 24px 24px 0px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
         }
 
+        /* ── Tabs ── */
+        .tabs-nav {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 24px;
+            border-bottom: 1px solid var(--glass-border);
+            padding-bottom: 16px;
+            justify-content: center;
+        }
+        .tab-btn {
+            background: transparent;
+            color: var(--text-muted);
+            border: 1px solid transparent;
+            padding: 10px 20px;
+            font-size: 15px;
+            font-weight: 600;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .tab-btn:hover { color: var(--text-main); background: rgba(255,255,255,0.05); }
+        .tab-btn.active { background: rgba(0,210,255,0.15); color: var(--btn-accent); border-color: rgba(0,210,255,0.3); }
+        
+        .tab-content { 
+            display: none; 
+            animation: fadeIn 0.3s;
+            flex: 1;
+            overflow: hidden;
+        }
+        .tab-content.active { 
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 340px 1fr;
+            gap: 24px;
+            align-items: start;
+            height: 100%;
+            overflow: hidden;
+        }
+        @keyframes fadeIn { from {opacity:0; transform:translateY(5px)} to {opacity:1; transform:translateY(0)} }
+
         @media (max-width: 900px) {
-            .page-wrapper { grid-template-columns: 1fr; }
+            .dashboard-grid { grid-template-columns: 1fr; }
         }
 
         /* ── Cards ── */
@@ -94,6 +146,10 @@
             border-radius: 24px;
             padding: 28px;
             box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+            display: flex;
+            flex-direction: column;
+            max-height: 100%;
+            overflow: hidden;
         }
 
         .card-title {
@@ -126,8 +182,9 @@
             border-radius: 10px;
             background: var(--input-bg);
             color: var(--text-main);
-            font-size: 15px;
-            font-family: 'Inter', sans-serif;
+            font-size: 16px;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 500;
             outline: none;
             transition: border-color 0.2s, box-shadow 0.2s;
         }
@@ -157,38 +214,54 @@
         .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
 
         .btn-primary {
-            background: linear-gradient(135deg, var(--btn-accent), var(--btn-accent-dark));
-            color: #0a1628;
+            background: var(--accent-gradient);
+            color: #ffffff;
             font-weight: 700;
             border: none;
+            box-shadow: 0 6px 16px -4px rgba(167, 139, 252, 0.4);
+            letter-spacing: 0.02em;
         }
-        .btn-primary:hover { opacity: 0.9; }
+        .btn-primary:hover { opacity: 0.9; box-shadow: 0 8px 20px -4px rgba(167, 139, 252, 0.6); }
 
         .btn-success { background: rgba(0,230,118,0.15); border-color: rgba(0,230,118,0.3); color: var(--success); }
         .btn-danger  { background: rgba(255,77,109,0.12); border-color: rgba(255,77,109,0.3); color: var(--error); }
         .btn-warning { background: rgba(255,183,77,0.12); border-color: rgba(255,183,77,0.3); color: var(--warning); }
         .btn-sm { padding: 6px 12px; font-size: 12px; border-radius: 7px; }
 
-        /* ── Operation Grid ── */
-        .op-grid {
+        /* ── Operation & Numpad Grids ── */
+        .calc-unified-grid {
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
-            margin-bottom: 18px;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 12px;
+            margin-bottom: 8px;
         }
-        .op-btn {
-            padding: 12px 8px;
-            font-size: 13px;
-            border-radius: 10px;
+        .numpad-btn {
+            background: rgba(255,255,255,0.05);
             border: 1px solid var(--glass-border);
-            background: var(--glass-bg);
             color: var(--text-main);
+            padding: 14px;
+            font-size: 18px;
+            font-weight: 500;
+            border-radius: 40px;
             cursor: pointer;
-            transition: 0.2s;
+            transition: all 0.2s;
+        }
+        .numpad-btn:hover { background: rgba(255,255,255,0.1); transform: scale(1.05); }
+        .op-btn {
+            padding: 14px 8px;
+            font-size: 16px;
+            border-radius: 40px;
+            border: 1px solid var(--glass-border);
+            background: rgba(0,0,0,0.3);
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.2s;
             font-family: inherit;
         }
-        .op-btn:hover { background: rgba(255,255,255,0.1); transform: translateY(-1px); }
-        .op-btn.active { background: rgba(0,210,255,0.15); border-color: rgba(0,210,255,0.5); color: var(--btn-accent); }
+        .op-btn:hover { background: rgba(255,255,255,0.1); color: var(--text-main); transform: scale(1.05); }
+        .op-btn.active { background: rgba(167, 139, 252, 0.2); border-color: rgba(167, 139, 252, 0.5); color: var(--btn-accent); box-shadow: 0 0 12px rgba(167, 139, 252, 0.3); }
+        .btn-calc-action { background: #a78bfc; color: #1a1a1a; font-weight: 700; border: none; }
+        .btn-calc-action:hover { background: #bba4fd; color: #1a1a1a; transform: scale(1.05); }
 
         /* ── Result Box ── */
         .result-box {
@@ -209,36 +282,40 @@
         .muted   { color: #666; font-size: 16px !important; font-weight: 400 !important; }
 
         /* ── Calculations Table ── */
-        .calc-table-wrap { overflow-x: auto; }
+        .calc-table-wrap { 
+            overflow-y: auto; 
+            flex: 1;
+        }
         table {
             width: 100%;
             border-collapse: collapse;
             font-size: 13px;
         }
         th {
-            padding: 10px 14px;
+            padding: 12px 14px;
             text-align: left;
-            font-size: 11px;
-            font-weight: 600;
+            font-size: 12px;
+            font-weight: 700;
             text-transform: uppercase;
-            letter-spacing: 0.05em;
-            color: var(--text-muted);
+            letter-spacing: 0.08em;
+            color: var(--btn-accent);
             border-bottom: 1px solid var(--glass-border);
         }
         td {
-            padding: 12px 14px;
-            border-bottom: 1px solid rgba(255,255,255,0.04);
+            padding: 14px 14px;
+            border-bottom: 1px solid rgba(255,255,255,0.03);
             transition: background 0.15s;
         }
         tr:hover td { background: rgba(255,255,255,0.03); }
         .type-badge {
             display: inline-block;
-            padding: 3px 8px;
-            border-radius: 5px;
+            padding: 4px 10px;
+            border-radius: 6px;
             font-size: 11px;
-            font-weight: 600;
-            background: rgba(0,210,255,0.12);
+            font-weight: 700;
+            background: rgba(167, 139, 252, 0.12);
             color: var(--btn-accent);
+            border: 1px solid rgba(167, 139, 252, 0.25);
         }
         .result-val { font-weight: 600; color: var(--success); }
         .actions-cell { display: flex; gap: 6px; }
@@ -337,6 +414,7 @@
         <span class="nav-user" id="nav-username-display" style="display:none">
             Logged in as <strong id="nav-username-text"></strong>
         </span>
+        <button class="btn-nav" id="nav-profile-btn" style="display:none" onclick="openProfileModal()">Profile</button>
         <a href="/login" class="btn-nav btn-nav-accent" id="nav-login-btn">Sign In</a>
         <button class="btn-nav" id="nav-logout-btn" style="display:none" onclick="handleLogout()">Log Out</button>
     </div>
@@ -345,75 +423,107 @@
 <!-- ── Main Layout ── -->
 <div class="page-wrapper">
 
-    <!-- LEFT: Calculator Panel -->
-    <div style="display:flex; flex-direction:column; gap:24px;">
+    <div class="tabs-nav">
+        <button class="tab-btn active" id="tab-btn-calculator" onclick="switchTab('calculator')">🔢 Calculator</button>
+        <button class="tab-btn" id="tab-btn-dashboard" onclick="switchTab('dashboard')">📊 Dashboard & History</button>
+    </div>
 
-        <!-- Arithmetic Calculator -->
-        <div class="card">
-            <div class="card-title"><span class="emoji">🔢</span> Calculator</div>
+    <!-- TAB: Calculator Panel -->
+    <div id="tab-calculator" class="tab-content active">
+        <div style="display: flex; flex-direction: column; gap: 32px; max-width: 580px; margin: 0 auto; width: 100%; height: auto; align-items: stretch; justify-content: flex-start; padding-bottom: 24px;">
+            
+            <!-- TOP: Calculator Panel -->
+            <div class="card" style="width: 100%; flex-shrink: 0; padding: 32px; display: flex; flex-direction: column; justify-content: flex-start; overflow: visible;">
+                <div class="card-title" style="justify-content: center; border-bottom: none; margin-bottom: 12px; font-size: 22px; flex-shrink: 0;"><span class="emoji">🔢</span> Calculator</div>
 
-            <div class="form-row">
-                <div class="form-group" style="margin:0">
-                    <label for="a">Number A</label>
-                    <input type="number" id="a" placeholder="e.g. 10" step="any" aria-label="First operand">
+                <div>
+                    <div class="form-row" style="margin-bottom: 24px; gap: 16px;">
+                        <input type="number" id="a" placeholder="Number A" step="any" aria-label="First operand" style="font-size: 22px; text-align: center; padding: 14px; border-radius: 20px; font-weight: 300; background: rgba(0,0,0,0.4);">
+                        <input type="number" id="b" placeholder="Number B" step="any" aria-label="Second operand" style="font-size: 22px; text-align: center; padding: 14px; border-radius: 20px; font-weight: 300; background: rgba(0,0,0,0.4);">
+                    </div>
+
+                    <div class="calc-unified-grid">
+                        <!-- Row 1 -->
+                        <button class="op-btn" id="op-power"      onclick="calculate('power', this)">a^b</button>
+                        <button class="op-btn" id="op-root"       onclick="calculate('root', this)">b√a</button>
+                        <button class="numpad-btn" onclick="insertNum('7')">7</button>
+                        <button class="numpad-btn" onclick="insertNum('8')">8</button>
+                        <button class="numpad-btn" onclick="insertNum('9')">9</button>
+                        <button class="op-btn" id="op-divide"     style="background: rgba(167, 139, 252, 0.1); color: var(--btn-accent);" onclick="calculate('divide', this)">÷</button>
+                        
+                        <!-- Row 2 -->
+                        <button class="op-btn" id="op-modulus"    onclick="calculate('modulus', this)">a % b</button>
+                        <button class="op-btn" id="op-int_divide" onclick="calculate('int_divide', this)">a // b</button>
+                        <button class="numpad-btn" onclick="insertNum('4')">4</button>
+                        <button class="numpad-btn" onclick="insertNum('5')">5</button>
+                        <button class="numpad-btn" onclick="insertNum('6')">6</button>
+                        <button class="op-btn" id="op-multiply"   style="background: rgba(167, 139, 252, 0.1); color: var(--btn-accent);" onclick="calculate('multiply', this)">×</button>
+                        
+                        <!-- Row 3 -->
+                        <button class="op-btn" id="op-percent"    onclick="calculate('percent', this)">%</button>
+                        <button class="op-btn" id="op-abs_diff"   onclick="calculate('abs_diff', this)">|a-b|</button>
+                        <button class="numpad-btn" onclick="insertNum('1')">1</button>
+                        <button class="numpad-btn" onclick="insertNum('2')">2</button>
+                        <button class="numpad-btn" onclick="insertNum('3')">3</button>
+                        <button class="op-btn" id="op-subtract"   style="background: rgba(167, 139, 252, 0.1); color: var(--btn-accent);" onclick="calculate('subtract', this)">−</button>
+
+                        <!-- Row 4 -->
+                        <button class="numpad-btn" style="grid-column: span 2; color: var(--error);" onclick="clearInputs()">AC</button>
+                        <button class="numpad-btn" onclick="insertNum('0')">0</button>
+                        <button class="numpad-btn" onclick="insertNum('.')">.</button>
+                        <button class="op-btn btn-calc-action" id="op-add" onclick="calculate('add', this)" style="grid-column: span 2;">+</button>
+                    </div>
                 </div>
-                <div class="form-group" style="margin:0">
-                    <label for="b">Number B</label>
-                    <input type="number" id="b" placeholder="e.g. 5" step="any" aria-label="Second operand">
+            </div>
+
+            <!-- BOTTOM: Results Side -->
+            <div class="card" style="width: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; border: 1px dashed rgba(167, 139, 252, 0.3); background: rgba(0,0,0,0.2); text-align: center; padding: 32px;">
+                <div style="font-size: 14px; text-transform: uppercase; color: var(--btn-accent); margin-bottom: 24px; letter-spacing: 0.15em; font-weight: 600;">Computation Result</div>
+                <div class="result-box" style="margin-top:0; width: 100%; border: none; background: transparent; flex-direction: column; gap: 24px; padding: 0;">
+                    <span id="result-text" class="muted" style="font-size: 48px; line-height: 1.2;">Ready…</span>
+                    <button class="btn btn-success" id="save-btn" onclick="saveCalculation()" style="display:none; padding: 14px 28px; font-size: 16px; font-weight: 700; border-radius: 12px; box-shadow: 0 8px 20px -6px rgba(16, 185, 129, 0.4);">
+                        💾 Save to Database
+                    </button>
+                    <div id="save-error" class="field-error" style="margin-top:8px"></div>
                 </div>
-            </div>
-
-            <div class="op-grid">
-                <button class="op-btn" id="op-add"        onclick="calculate('add',      this)">Add (+)</button>
-                <button class="op-btn" id="op-subtract"   onclick="calculate('subtract', this)">Subtract (−)</button>
-                <button class="op-btn" id="op-multiply"   onclick="calculate('multiply', this)">Multiply (×)</button>
-                <button class="op-btn" id="op-divide"     onclick="calculate('divide',   this)">Divide (÷)</button>
-                <button class="op-btn" id="op-power"      onclick="calculate('power',    this)">Power (a^b)</button>
-                <button class="op-btn" id="op-root"       onclick="calculate('root',     this)">Root (b-th of a)</button>
-                <button class="op-btn" id="op-modulus"    onclick="calculate('modulus',  this)">Modulus (a % b)</button>
-                <button class="op-btn" id="op-int_divide" onclick="calculate('int_divide',this)">Int Divide (a // b)</button>
-                <button class="op-btn" id="op-percent"    onclick="calculate('percent',  this)">Percent (a of b)</button>
-                <button class="op-btn" id="op-abs_diff"   onclick="calculate('abs_diff', this)">Abs Diff |a−b|</button>
-            </div>
-
-            <div class="result-box">
-                <span id="result-text" class="muted">Result will appear here…</span>
-                <button class="btn btn-success btn-sm" id="save-btn" onclick="saveCalculation()" style="display:none; white-space:nowrap" id="save-calculation-btn">
-                    💾 Save to DB
-                </button>
-            </div>
-            <div id="save-error" class="field-error" style="margin-top:8px"></div>
-        </div>
-
-        <!-- Memory & Quick History -->
-        <div class="card">
-            <div class="card-title"><span class="emoji">🧠</span> Memory & Quick History</div>
-            <div class="memory-btns">
-                <button class="btn btn-sm" onclick="memStore()">Store A</button>
-                <button class="btn btn-sm" onclick="memRecall()">Recall</button>
-                <button class="btn btn-sm" onclick="execAdvanced('POST','/undo',null)">Undo</button>
-                <button class="btn btn-sm" onclick="execAdvanced('POST','/redo',null)">Redo</button>
-            </div>
-            <div style="display:flex; gap:8px; margin:12px 0 10px;">
-                <button class="btn btn-sm" style="flex:1" onclick="fetchHistory()">🔄 Reload</button>
-                <button class="btn btn-sm btn-danger" style="flex:1" onclick="clearServerHistory()">🗑 Clear</button>
-            </div>
-            <div class="history-list" id="history-container">
-                <div class="history-item">History empty.</div>
             </div>
         </div>
     </div>
 
-    <!-- RIGHT: BREAD Dashboard -->
-    <div class="card" style="align-self:start">
-        <div class="card-title"><span class="emoji">📊</span> My Calculations <span style="font-size:12px; color:var(--text-muted); font-weight:400; margin-left:auto" id="calc-count"></span></div>
+    <!-- TAB: Dashboard -->
+    <div id="tab-dashboard" class="tab-content">
+        <div class="dashboard-grid">
+            <!-- Analytics & Reporting Dashboard -->
+            <div class="card" id="analytics-panel" style="display:none">
+                <div class="card-title"><span class="emoji">📈</span> Usage Statistics</div>
+                <div class="stats-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                    <div class="stat-box" style="background: rgba(0,0,0,0.2); padding: 12px; border-radius: 10px; text-align: center;">
+                        <div style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 4px;">Total Calcs</div>
+                        <div id="stat-total" style="font-size: 20px; font-weight: 700; color: var(--btn-accent);">0</div>
+                    </div>
+                    <div class="stat-box" style="background: rgba(0,0,0,0.2); padding: 12px; border-radius: 10px; text-align: center;">
+                        <div style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 4px;">Favorite Op</div>
+                        <div id="stat-favorite" style="font-size: 20px; font-weight: 700; color: var(--success);">-</div>
+                    </div>
+                    <div class="stat-box" style="background: rgba(0,0,0,0.2); padding: 12px; border-radius: 10px; text-align: center; grid-column: span 2;">
+                        <div style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 4px;">Sum of All Results</div>
+                        <div id="stat-sum" style="font-size: 18px; font-weight: 700; color: var(--text-main);">0.0</div>
+                    </div>
+                </div>
+                <button class="btn btn-sm" style="width: 100%; margin-top: 12px;" onclick="loadStats()">🔄 Refresh Stats</button>
+            </div>
 
-        <div id="auth-banner" class="auth-banner" style="display:none">
-            ⚠️ You are not signed in. <a href="/login">Sign in</a> to browse, save, edit, and delete calculations.
-        </div>
+            <!-- RIGHT: BREAD Dashboard -->
+            <div class="card" style="align-self:start">
+                <div class="card-title"><span class="emoji">📊</span> My Calculations <span style="font-size:12px; color:var(--text-muted); font-weight:400; margin-left:auto" id="calc-count"></span></div>
 
-        <div style="display:flex; gap:8px; margin-bottom:16px;">
+                <div id="auth-banner" class="auth-banner" style="display:none">
+                    ⚠️ You are not signed in. <a href="/login">Sign in</a> to browse, save, edit, and delete calculations.
+                </div>
+
+                <div style="display:flex; gap:8px; margin-bottom:16px;">
             <button class="btn btn-sm btn-primary" onclick="loadCalculations()" id="browse-btn">🔄 Refresh</button>
+            <button class="btn btn-sm btn-success" onclick="exportCSV()" id="export-csv-btn" style="display:none;">📥 Export CSV</button>
         </div>
 
         <div class="calc-table-wrap">
@@ -433,11 +543,14 @@
                 </tbody>
             </table>
         </div>
+        </div>
     </div>
-</div>
-
-<!-- ── Edit Modal ── -->
-<div class="modal-overlay" id="edit-modal" role="dialog" aria-modal="true" aria-labelledby="edit-modal-title">
+    </div> <!-- End Dashboard Grid -->
+    </div> <!-- End Dashboard Tab -->
+</div> <!-- End Page Wrapper -->
+    <!-- Modals -->
+    <!-- Edit Calculation Modal -->
+    <div class="modal-overlay" id="edit-modal" role="dialog" aria-modal="true" aria-labelledby="edit-modal-title">
     <div class="modal">
         <div class="modal-title" id="edit-modal-title">✏️ Edit Calculation</div>
 
@@ -464,6 +577,8 @@
                 <option value="MULTIPLY">Multiply</option>
                 <option value="DIVIDE">Divide</option>
                 <option value="INT_DIVIDE">Int Divide</option>
+                <option value="POWER">Power (a^b)</option>
+                <option value="MODULUS">Modulus (a%b)</option>
             </select>
         </div>
 
@@ -472,6 +587,40 @@
         <div class="modal-footer">
             <button class="btn" onclick="closeEditModal()">Cancel</button>
             <button class="btn btn-primary" id="edit-save-btn" onclick="submitEdit()">Save Changes</button>
+        </div>
+    </div>
+</div>
+</div>
+
+<!-- Profile Modal -->
+<div class="modal-overlay" id="profile-modal">
+    <div class="modal">
+        <div class="modal-title">👤 My Profile Settings</div>
+        
+        <div class="form-group">
+            <label>Update Username</label>
+            <input type="text" id="profile-username-input" placeholder="New Username">
+        </div>
+        <div class="form-group">
+            <label>Update Email</label>
+            <input type="email" id="profile-email-input" placeholder="New Email Address">
+        </div>
+        <button class="btn btn-primary" style="width:100%; margin-bottom: 20px" id="btn-update-profile" onclick="updateProfile()">Update Profile</button>
+        
+        <hr style="border: 0; height: 1px; background: var(--glass-border); margin: 0 0 20px 0;">
+
+        <div class="form-group">
+            <label>Current Password</label>
+            <input type="password" id="profile-curr-pass" placeholder="Enter current password to verify">
+        </div>
+        <div class="form-group">
+            <label>New Password</label>
+            <input type="password" id="profile-new-pass" placeholder="8+ characters">
+        </div>
+        <button class="btn btn-primary" style="width:100%" id="btn-update-password" onclick="updatePassword()">Change Password</button>
+
+        <div class="modal-footer">
+            <button class="btn" onclick="closeProfileModal()">Close</button>
         </div>
     </div>
 </div>
@@ -497,34 +646,31 @@
 
     function updateNavAuth() {
         authToken = getToken();
-        const loginBtn    = document.getElementById('nav-login-btn');
-        const logoutBtn   = document.getElementById('nav-logout-btn');
-        const userDisplay = document.getElementById('nav-username-display');
+        const loginBtn = document.getElementById('nav-login-btn');
+        const logoutBtn = document.getElementById('nav-logout-btn');
+        const profileBtn = document.getElementById('nav-profile-btn');
+        const userDisp = document.getElementById('nav-username-display');
 
         if (authToken) {
-            loginBtn.style.display    = 'none';
-            logoutBtn.style.display   = 'inline-block';
-            userDisplay.style.display = 'inline-block';
+            loginBtn.style.display = 'none';
+            logoutBtn.style.display = 'inline-block';
+            profileBtn.style.display = 'inline-block';
+            userDisp.style.display = 'inline-block';
             // Fetch username from DB
             authFetch('/users/' + parseJwtUser(authToken).id)
                 .then(r => r.ok ? r.json() : null)
                 .then(u => { if (u) document.getElementById('nav-username-text').textContent = u.username; })
                 .catch(() => {});
         } else {
-            loginBtn.style.display    = 'inline-block';
-            logoutBtn.style.display   = 'none';
-            userDisplay.style.display = 'none';
+            // Strictly require login
+            window.location.replace('/login');
         }
     }
 
     function handleLogout() {
         localStorage.removeItem(TOKEN_KEY);
         authToken = null;
-        updateNavAuth();
-        renderEmptyTable('Sign in to view your calculations.');
-        document.getElementById('auth-banner').style.display = 'block';
-        document.getElementById('calc-count').textContent = '';
-        showToast('Logged out.', 'success');
+        window.location.replace('/login');
     }
 
     // ── Authenticated fetch ────────────────────────────────────────────────
@@ -533,6 +679,29 @@
         const headers = { 'Content-Type': 'application/json', ...(options.headers || {}) };
         if (token) headers['Authorization'] = 'Bearer ' + token;
         return fetch(url, { ...options, headers });
+    }
+
+    // ── Numpad Input Tracking ──────────────────────────────────────────────
+    let activeInputId = 'a';
+    document.getElementById('a').addEventListener('focus', () => activeInputId = 'a');
+    document.getElementById('b').addEventListener('focus', () => activeInputId = 'b');
+
+    function insertNum(val) {
+        const input = document.getElementById(activeInputId);
+        input.value = input.value + val;
+    }
+    
+    function clearInputs() {
+        document.getElementById(activeInputId).value = '';
+        document.getElementById(activeInputId).focus();
+    }
+
+    // ── Tabs Functionality ────────────────────────────────────────────────
+    function switchTab(tabId) {
+        document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+        document.getElementById('tab-' + tabId).classList.add('active');
+        document.getElementById('tab-btn-' + tabId).classList.add('active');
     }
 
     // ── Toast ──────────────────────────────────────────────────────────────
@@ -559,8 +728,8 @@
     // Map from API endpoint → OperationType enum value
     const OP_MAP = {
         add: 'ADD', subtract: 'SUBTRACT', multiply: 'MULTIPLY',
-        divide: 'DIVIDE', power: null, root: null,
-        modulus: null, int_divide: 'INT_DIVIDE', percent: null, abs_diff: null
+        divide: 'DIVIDE', power: 'POWER', root: null,
+        modulus: 'MODULUS', int_divide: 'INT_DIVIDE', percent: null, abs_diff: null
     };
 
     async function calculate(op, btn) {
@@ -583,12 +752,11 @@
                 setResult(data.error, 'error');
             } else {
                 setResult(data.result, 'success');
-                fetchHistory();
-                // Only show Save button for ops we can persist
+                // Automatically save calculation to DB without asking
                 const dbType = OP_MAP[op];
                 if (dbType && getToken()) {
                     currentResult = { a: parseFloat(a), b: parseFloat(b), type: dbType };
-                    saveBtn.style.display = 'inline-block';
+                    await saveCalculation();
                 }
             }
         } catch {
@@ -599,12 +767,10 @@
     // ── A — Add / Save to DB ──────────────────────────────────────────────
     async function saveCalculation() {
         if (!currentResult) return;
-        if (!getToken()) {
-            showToast('Please sign in to save calculations.', 'error');
-            return;
-        }
-        saveBtn.disabled = true;
-        saveBtn.innerHTML = '<span class="spinner"></span> Saving…';
+        if (!getToken()) return;
+
+        // Auto-save: don't need button UI logic
+
         document.getElementById('save-error').textContent = '';
         document.getElementById('save-error').style.display = 'none';
 
@@ -615,9 +781,8 @@
             });
             const data = await resp.json();
             if (resp.ok) {
-                showToast(`✅ Saved! (ID ${data.id})`, 'success');
+                showToast(`✅ Auto-Saved! (ID ${data.id})`, 'success');
                 currentResult = null;
-                saveBtn.style.display = 'none';
                 loadCalculations();
             } else {
                 const msg = data.detail || JSON.stringify(data);
@@ -627,10 +792,8 @@
             }
         } catch {
             showToast('Network error while saving.', 'error');
-        } finally {
-            saveBtn.disabled = false;
-            saveBtn.textContent = '💾 Save to DB';
         }
+
     }
 
     // ── B — Browse: load calculations table ───────────────────────────────
@@ -648,14 +811,16 @@
         try {
             const resp = await authFetch('/calculations/');
             if (resp.status === 401) {
-                banner.style.display = 'block';
-                renderEmptyTable('Not authenticated.');
+                handleLogout(); // Force re-authentication on expired token
                 return;
             }
             const data = await resp.json();
             renderTable(data);
+            // Show/hide CSV button based on whether there's data
+            document.getElementById('export-csv-btn').style.display = data.length > 0 ? 'inline-block' : 'none';
             document.getElementById('calc-count').textContent =
                 data.length === 0 ? '' : `(${data.length} record${data.length > 1 ? 's' : ''})`;
+            loadStats();
         } catch {
             renderEmptyTable('Failed to load calculations.');
         }
@@ -697,6 +862,47 @@
                 </td>
             </tr>`
         ).join('');
+    }
+
+    // ── D — Download CSV ──────────────────────────────────────────────────
+    async function exportCSV() {
+        const btn = document.getElementById('export-csv-btn');
+        btn.disabled = true;
+        btn.textContent = '⏳ Exporting…';
+        try {
+            // Always fetch fresh data from the API rather than scraping the table
+            const resp = await authFetch('/calculations/');
+            if (!resp.ok) { showToast('Failed to fetch calculations.', 'error'); return; }
+            const data = await resp.json();
+            if (!data.length) { showToast('No calculations to export.', 'error'); return; }
+
+            const headers = ['ID', 'A', 'Operation', 'B', 'Result'];
+            const lines = [headers.join(',')];
+            data.forEach(c => {
+                lines.push(
+                    [c.id, c.a, c.type, c.b, c.result]
+                        .map(v => '"' + String(v).replace(/"/g, '""') + '"')
+                        .join(',')
+                );
+            });
+            const csv    = lines.join('\n');
+            const blob   = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url    = URL.createObjectURL(blob);
+            const anchor = document.createElement('a');
+            anchor.href     = url;
+            anchor.download = 'calculations_' + new Date().toISOString().slice(0, 10) + '.csv';
+            document.body.appendChild(anchor);
+            anchor.click();
+            document.body.removeChild(anchor);
+            // Delay cleanup so the browser can initiate the download first
+            setTimeout(function() { URL.revokeObjectURL(url); }, 3000);
+            showToast('✅ CSV downloaded!', 'success');
+        } catch (err) {
+            showToast('Export failed: ' + err.message, 'error');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '📥 Export CSV';
+        }
     }
 
     // ── E — Edit (PUT) ────────────────────────────────────────────────────
@@ -756,6 +962,7 @@
                 closeEditModal();
                 showToast(`✅ Calculation #${id} updated!`, 'success');
                 loadCalculations();
+                loadStats();
             } else {
                 const errMsg = typeof data.detail === 'string'
                     ? data.detail
@@ -783,6 +990,7 @@
             if (resp.status === 204) {
                 showToast(`🗑 Calculation #${id} deleted.`, 'success');
                 loadCalculations();
+                loadStats();
             } else {
                 const data = await resp.json();
                 showToast('Delete failed: ' + (data.detail || resp.status), 'error');
@@ -807,59 +1015,141 @@
         } catch { setResult('Network Error', 'error'); }
     }
 
-    async function memStore() {
-        const val = document.getElementById('a').value || '0';
-        await execAdvanced('POST', '/memory/store', { value: val });
-    }
-
-    async function memRecall() {
+    // ── Analytics & Data Export ──────────────────────────────────────────────────
+    async function loadStats() {
+        if (!authToken) return;
         try {
-            const resp = await fetch('/memory/recall');
-            const data = await resp.json();
-            if (data.result && !data.result.includes('not found')) {
-                document.getElementById('a').value = data.result;
-                setResult(data.result, 'success');
-            } else { setResult('No memory found', 'error'); }
-        } catch { setResult('Network Error', 'error'); }
-    }
-
-    async function clearServerHistory() {
-        await execAdvanced('POST', '/history/clear', null);
-        fetchHistory();
-    }
-
-    async function fetchHistory() {
-        try {
-            const res  = await fetch('/history');
-            const data = await res.json();
-            const container = document.getElementById('history-container');
-            container.innerHTML = '';
-            if (data.result && typeof data.result === 'string' && data.result.includes('Calculation History')) {
-                const lines = data.result.split('\n').filter(l => l.includes('=') || l.includes('Command:'));
-                if (!lines.length) {
-                    container.innerHTML = "<div class='history-item'>No calculations yet.</div>";
-                    return;
-                }
-                lines.reverse().slice(0, 10).forEach(line => {
-                    const div = document.createElement('div');
-                    div.className = 'history-item';
-                    div.textContent = line.replace(/^\d+\.\s+/, '');
-                    container.appendChild(div);
-                });
-            } else {
-                container.innerHTML = "<div class='history-item'>History empty.</div>";
+            const res = await authFetch('/calculations/stats');
+            if (res.ok) {
+                const data = await res.json();
+                document.getElementById('analytics-panel').style.display = 'block';
+                document.getElementById('stat-total').textContent = data.total_calculations;
+                document.getElementById('stat-favorite').textContent = data.favorite_operation;
+                
+                // Format the float nicely
+                const sumResult = Number(data.sum_of_results);
+                document.getElementById('stat-sum').textContent = Number.isInteger(sumResult) ? sumResult : sumResult.toFixed(4);
+            } else if (res.status === 401) {
+                handleLogout();
             }
-        } catch {}
+        } catch { console.error("Failed to load stats"); }
+    }
+
+    async function exportCSV() {
+        if (!authToken) return;
+        try {
+            const btn = document.getElementById('export-csv-btn');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '⏳ Exporting...';
+            btn.disabled = true;
+
+            const res = await authFetch('/calculations/export/csv');
+            if (!res.ok) throw new Error("Export failed");
+            
+            const blob = await res.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = url;
+            a.download = 'my_calculations.csv';
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            
+            showToast('✅ CSV Exported Successfully!', 'success');
+        } catch (e) {
+            showToast('❌ Failed to export CSV', 'error');
+        } finally {
+            const btn = document.getElementById('export-csv-btn');
+            btn.innerHTML = '📥 Export CSV';
+            btn.disabled = false;
+        }
     }
 
     // Close modal on overlay click
     document.getElementById('edit-modal').addEventListener('click', function(e) {
         if (e.target === this) closeEditModal();
     });
+    document.getElementById('profile-modal').addEventListener('click', function(e) {
+        if (e.target === this) closeProfileModal();
+    });
+
+    // ── Profile Modals ───────────────────────────────────────────────────
+    function openProfileModal() {
+        document.getElementById('profile-username-input').value = document.getElementById('nav-username-text').textContent || '';
+        document.getElementById('profile-email-input').value = '';
+        document.getElementById('profile-curr-pass').value = '';
+        document.getElementById('profile-new-pass').value = '';
+        document.getElementById('profile-modal').classList.add('open');
+    }
+
+    function closeProfileModal() {
+        document.getElementById('profile-modal').classList.remove('open');
+    }
+
+    async function updateProfile() {
+        const username = document.getElementById('profile-username-input').value.trim();
+        const email = document.getElementById('profile-email-input').value.trim();
+        const btn = document.getElementById('btn-update-profile');
+        
+        let payload = {};
+        if (username) payload.username = username;
+        if (email) payload.email = email;
+        if (Object.keys(payload).length === 0) return;
+
+        btn.disabled = true;
+        try {
+            const res = await authFetch('/users/me/profile', {
+                method: 'PUT',
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+            if (res.ok) {
+                showToast('✅ Profile updated successfully!', 'success');
+                if (data.username) document.getElementById('nav-username-text').textContent = data.username;
+            } else {
+                showToast('❌ ' + (data.detail || 'Update failed'), 'error');
+            }
+        } catch {
+            showToast('❌ Network error', 'error');
+        } finally {
+            btn.disabled = false;
+        }
+    }
+
+    async function updatePassword() {
+        const currPass = document.getElementById('profile-curr-pass').value;
+        const newPass = document.getElementById('profile-new-pass').value;
+        const btn = document.getElementById('btn-update-password');
+        
+        if (!currPass || !newPass) {
+            showToast('❌ Please fill both password fields.', 'error');
+            return;
+        }
+
+        btn.disabled = true;
+        try {
+            const res = await authFetch('/users/me/password', {
+                method: 'PUT',
+                body: JSON.stringify({ current_password: currPass, new_password: newPass })
+            });
+            const data = await res.json();
+            if (res.ok) {
+                showToast('✅ Password changed. Please log in again.', 'success');
+                setTimeout(() => handleLogout(), 1500);
+            } else {
+                showToast('❌ ' + (data.detail || 'Password update failed'), 'error');
+            }
+        } catch {
+            showToast('❌ Network error', 'error');
+        } finally {
+            btn.disabled = false;
+        }
+    }
 
     // ── Init ──────────────────────────────────────────────────────────────
     updateNavAuth();
-    fetchHistory();
+    loadStats();
     loadCalculations();
 </script>
 </body>

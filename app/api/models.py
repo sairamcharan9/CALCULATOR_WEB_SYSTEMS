@@ -72,10 +72,19 @@ class CalculationModelFactory:
             result = a - b
         elif op == "MULTIPLY":
             result = a * b
-        elif op in ("DIVIDE", "INT_DIVIDE"):
+        elif op in ("DIVIDE", "INT_DIVIDE", "MODULUS"):
             if b == 0:
                 raise ValueError("Cannot divide by zero")
-            result = a / b if op == "DIVIDE" else float(int(a) // int(b))
+            if op == "DIVIDE":
+                result = a / b
+            elif op == "INT_DIVIDE":
+                result = float(int(a) // int(b))
+            else:
+                result = a % b
+        elif op == "POWER":
+            # Note: Math library `pow` normally avoids large exponents, but `**` works
+            # We'll just use Python's built-in power
+            result = a ** b
         else:
             raise ValueError(f"Unsupported calculation type: {operation_type}")
 
