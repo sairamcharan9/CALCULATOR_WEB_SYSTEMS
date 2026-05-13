@@ -9,8 +9,13 @@ A professional-grade, dual-mode Calculator built in Python featuring a full **CL
 
 ## 📸 Application Interface Preview
 
+### Calculator SPA View
 ![CalcBREAD Frontend Interface](image.png)
 *(Above: The stunning Glassmorphism SPA frontend featuring instant mode switching, calculation dashboards, interactive arithmetic keys, and profile session controls.)*
+
+### Dashboard & History View
+![CalcBREAD Dashboard & History](image%20copy.png)
+*(Above: The robust interactive history dashboard allowing real-time browsing, detailed inspection, inline editing, and deletion of user calculations via fully integrated BREAD endpoints.)*
 
 ---
 
