@@ -78,3 +78,8 @@ def percent(a: Decimal, b: Decimal) -> Decimal:
 @command("abs_diff", "Returns the absolute difference between `a` and `b`.", "abs_diff <n1> <n2>")
 def abs_diff(a: Decimal, b: Decimal) -> Decimal:
     return abs(a - b)
+
+
+@command("cube", "Returns the cube (x^3) of a Decimal number.", "cube <num>")
+def cube(a: Decimal) -> Decimal:
+    return a ** Decimal(3)
