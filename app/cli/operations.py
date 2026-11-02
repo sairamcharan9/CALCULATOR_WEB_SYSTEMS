@@ -78,3 +78,40 @@ def percent(a: Decimal, b: Decimal) -> Decimal:
 @command("abs_diff", "Returns the absolute difference between `a` and `b`.", "abs_diff <n1> <n2>")
 def abs_diff(a: Decimal, b: Decimal) -> Decimal:
     return abs(a - b)
+
+
+@command("sin", "Returns the sine of `a` in radians.", "sin <number>")
+def sin(a: Decimal) -> Decimal:
+    return Decimal(math.sin(a))
+
+
+@command("cos", "Returns the cosine of `a` in radians.", "cos <number>")
+def cos(a: Decimal) -> Decimal:
+    return Decimal(math.cos(a))
+
+
+@command("tan", "Returns the tangent of `a` in radians.", "tan <number>")
+def tan(a: Decimal) -> Decimal:
+    return Decimal(math.tan(a))
+
+
+@command("log", "Returns the base-10 logarithm of `a`.", "log <number>")
+def log(a: Decimal) -> Decimal:
+    return Decimal(math.log10(a))
+
+
+@command("ln", "Returns the natural logarithm of `a`.", "ln <number>")
+def ln(a: Decimal) -> Decimal:
+    return Decimal(math.log(a))
+
+
+@command("distance", "Returns the Euclidean distance between two points (x1, y1) and (x2, y2).", "distance <x1> <y1> <x2> <y2>")
+def distance(x1: Decimal, y1: Decimal, x2: Decimal, y2: Decimal) -> Decimal:
+    """Returns the Euclidean distance between two points (x1, y1) and (x2, y2)."""
+    return ((x2 - x1) ** 2 + (y2 - y1) ** 2).sqrt()
+
+
+@command("cube", "Returns the cube (x^3) of a Decimal number.", "cube <num>")
+def cube(a: Decimal) -> Decimal:
+    """Returns the cube (x^3) of a Decimal number."""
+    return a ** 3
