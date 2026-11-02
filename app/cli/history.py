@@ -91,8 +91,8 @@ class CalculationHistory:
             observer.on_calculation(calculation)
 
     def add(self, calculation: Calculation) -> None:
-        new_row = pd.DataFrame([self._calculation_to_dict(calculation)])
-        self._df = pd.concat([self._df, new_row], ignore_index=True)
+        calc_dict = self._calculation_to_dict(calculation)
+        self._df.loc[len(self._df)] = calc_dict
         if len(self._df) > self.max_size:
             self._df = self._df.tail(self.max_size).reset_index(drop=True)
         self._notify_observers(calculation)
@@ -102,16 +102,16 @@ class CalculationHistory:
 
     def get_calculations(self) -> list[Calculation]:
         calculations = []
-        for index, row in self._df.iterrows():
+        for index, row_dict in enumerate(self._df.to_dict(orient="records")):
             try:
-                calc = self._dict_to_calculation(row.to_dict())
+                calc = self._dict_to_calculation(row_dict)
                 if calc.result is None:
                     calc.execute()
                 calculations.append(calc)
             except Exception as e:
                 logging.warning(
                     "Skipping malformed history row #%d during load: %s | Error: %s",
-                    index, row.to_dict(), e,
+                    index, row_dict, e,
                 )
         return calculations
 
@@ -147,16 +147,16 @@ class CalculationHistory:
                 self._df = self._df.tail(self.max_size).reset_index(drop=True)
 
             loaded_calculations = []
-            for index, row in self._df.iterrows():
+            for index, row_dict in enumerate(self._df.to_dict(orient="records")):
                 try:
-                    calc = self._dict_to_calculation(row.to_dict())
+                    calc = self._dict_to_calculation(row_dict)
                     if calc.result is None:
                         calc.execute()
                     loaded_calculations.append(calc)
                 except Exception as e:
                     logging.warning(
                         "Skipping malformed history row #%d during load: %s | Error: %s",
-                        index, row.to_dict(), e,
+                        index, row_dict, e,
                     )
 
             self._df = pd.DataFrame(
