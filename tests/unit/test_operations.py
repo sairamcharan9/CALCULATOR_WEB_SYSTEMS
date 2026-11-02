@@ -4,7 +4,7 @@ Tests for the Operations Module
 
 Parameterized tests covering mandatory arithmetic operations:
 add, subtract, multiply, divide, power, root, modulus, int_divide,
-percent, abs_diff — including edge cases.
+percent, abs_diff, cube — including edge cases.
 """
 
 import pytest
@@ -25,6 +25,7 @@ from app.cli.operations import (
     int_divide,
     percent,
     abs_diff,
+    cube,
 )
 
 @pytest.fixture(autouse=True)
@@ -224,6 +225,26 @@ def test_abs_diff(a: Decimal, b: Decimal, expected: Decimal) -> None:
 
 
 # ---------------------------------------------------------------------------
+# cube
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "a, expected",
+    [
+        (Decimal("2"), Decimal("8")),
+        (Decimal("3"), Decimal("27")),
+        (Decimal("0"), Decimal("0")),
+        (Decimal("-2"), Decimal("-8")),
+        (Decimal("-3"), Decimal("-27")),
+        (Decimal("1.5"), Decimal("3.375")),
+    ],
+)
+def test_cube(a: Decimal, expected: Decimal) -> None:
+    assert cube(a) == expected
+
+
+# ---------------------------------------------------------------------------
 # Command Registration
 # ---------------------------------------------------------------------------
 
@@ -232,7 +253,7 @@ class TestOperationRegistration:
     
     ARITHMETIC_COMMANDS = [
         "add", "subtract", "multiply", "divide", "power", "root", 
-        "modulus", "int_divide", "percent", "abs_diff"
+        "modulus", "int_divide", "percent", "abs_diff", "cube"
     ]
 
     @pytest.mark.parametrize("command_name", ARITHMETIC_COMMANDS)
