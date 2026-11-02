@@ -8,6 +8,7 @@ Command/Strategy patterns to evaluate nested functions dynamically.
 """
 
 import logging
+from functools import lru_cache
 from typing import List, Optional
 from decimal import Decimal
 
@@ -26,38 +27,32 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/macros", tags=["macros"])
 
 
-def eval_macro_expression(expr: str, variables: dict[str, float]) -> float:
+@lru_cache(maxsize=1024)
+def _parse_macro_ast(expr: str):
     """
-    Recursively breaks down string-based macro expressions into nested base operations.
-    Utilizes registered commands in CommandManager for calculation logic.
+    Parses an expression string into an AST tuple structure, cached for performance:
+      ('LITERAL', float_val)
+      ('VAR', var_name)
+      ('CALL', func_name, (child_ast_1, child_ast_2, ...))
     """
     expr = expr.strip()
     if not expr:
         raise ValueError("Empty macro expression encountered.")
 
-    # 1. Check if it's a simple literal float/int
     try:
-        return float(expr)
+        return ("LITERAL", float(expr))
     except ValueError:
         pass
 
-    # 2. Check if it's a defined variable
-    if expr in variables:
-        return float(variables[expr])
-
-    # 3. Must be a function call: func_name(arg1, arg2, ...)
     open_paren = expr.find('(')
     if open_paren == -1 or not expr.endswith(')'):
-        raise ValueError(f"Unknown variable or invalid expression syntax: '{expr}'")
+        return ("VAR", expr)
 
     func_name = expr[:open_paren].strip().lower()
-    # Map friendly alias
     if func_name == "pow":
         func_name = "power"
 
     args_str = expr[open_paren + 1:-1].strip()
-
-    # Tokenize arguments at top level of current parenthesis depth
     args = []
     current_arg = []
     depth = 0
@@ -77,24 +72,45 @@ def eval_macro_expression(expr: str, variables: dict[str, float]) -> float:
     if current_arg:
         args.append("".join(current_arg).strip())
 
-    # Filter out empty arguments gracefully
-    args = [a for a in args if a]
+    child_asts = tuple(_parse_macro_ast(a) for a in args if a)
+    return ("CALL", func_name, child_asts)
 
-    # Recursively evaluate each argument
-    evaluated_args = [eval_macro_expression(arg, variables) for arg in args]
 
-    # Retrieve command logic via Strategy/Command Pattern Manager
-    cmd = command_manager.get_command(func_name)
-    if not cmd or not ("<" in cmd.usage and "[" not in cmd.usage):
-        raise ValueError(f"Unsupported formula operation: '{func_name}'")
+def _eval_ast(node, variables: dict[str, float]) -> float:
+    node_type = node[0]
+    if node_type == "LITERAL":
+        return node[1]
+    elif node_type == "VAR":
+        var_name = node[1]
+        if var_name in variables:
+            return float(variables[var_name])
+        raise ValueError(f"Unknown variable or invalid expression syntax: '{var_name}'")
+    elif node_type == "CALL":
+        func_name = node[1]
+        child_asts = node[2]
+        evaluated_args = [_eval_ast(c, variables) for c in child_asts]
+        cmd = command_manager.get_command(func_name)
+        if not cmd or not ("<" in cmd.usage and "[" not in cmd.usage):
+            raise ValueError(f"Unsupported formula operation: '{func_name}'")
+        try:
+            dec_args = [Decimal(str(val)) for val in evaluated_args]
+            res = cmd.handler(*dec_args)
+            return float(res)
+        except Exception as exc:
+            raise ValueError(f"Error evaluating '{func_name}': {exc}")
+    raise ValueError(f"Unknown node type: {node_type}")
 
-    # Execute using existing handler
-    try:
-        dec_args = [Decimal(str(val)) for val in evaluated_args]
-        res = cmd.handler(*dec_args)
-        return float(res)
-    except Exception as exc:
-        raise ValueError(f"Error evaluating '{func_name}': {exc}")
+
+def eval_macro_expression(expr: str, variables: dict[str, float]) -> float:
+    """
+    Recursively breaks down string-based macro expressions into nested base operations.
+    Utilizes registered commands in CommandManager for calculation logic.
+    """
+    expr = expr.strip()
+    if not expr:
+        raise ValueError("Empty macro expression encountered.")
+    ast_root = _parse_macro_ast(expr)
+    return _eval_ast(ast_root, variables)
 
 
 @router.post("/execute", summary="Dynamically calculate macro expressions")

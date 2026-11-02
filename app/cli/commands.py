@@ -43,6 +43,7 @@ class CommandManager:
         if cls._instance is None:
             cls._instance = super().__new__(cls)
             cls._instance.commands = {}
+            cls._instance._sorted_commands_cache = None
             _log.info("CommandManager initialized.")
         return cls._instance
 
@@ -51,6 +52,7 @@ class CommandManager:
         if command_name in self.commands:
             _log.warning("Command '%s' is being overridden.", command_name)
         self.commands[command_name] = Command(command_name, handler, description, usage)
+        self._sorted_commands_cache = None
         _log.info("Command '%s' registered.", command_name)
 
     def get_command(self, command_name: str) -> Optional[Command]:
@@ -59,11 +61,14 @@ class CommandManager:
 
     def get_all_commands(self) -> List[Command]:
         """Retrieves a sorted list of all registered commands."""
-        return sorted(self.commands.values(), key=lambda cmd: cmd.name)
+        if self._sorted_commands_cache is None:
+            self._sorted_commands_cache = sorted(self.commands.values(), key=lambda cmd: cmd.name)
+        return list(self._sorted_commands_cache)
 
     def clear_commands(self) -> None:
         """Clears all registered commands."""
         self.commands = {}
+        self._sorted_commands_cache = None
         _log.info("All commands cleared.")
 
 
